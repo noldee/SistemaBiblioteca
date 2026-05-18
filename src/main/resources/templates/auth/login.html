@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iniciar Sesión — BiblioUNI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 400: '#818ef6', 500: '#6366f1', 600: '#4f46e5' }
+                    },
+                    fontFamily: {
+                        sans: ['DM Sans', 'sans-serif'],
+                        display: ['Fraunces', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,700;1,400&display=swap"
+        rel="stylesheet" />
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen antialiased flex items-center justify-center p-4">
+
+    <!-- Background decoration -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl"></div>
+        <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-500/5 rounded-full blur-3xl">
+        </div>
+    </div>
+
+    <div class="relative w-full max-w-md" x-data="{ showPass: false }">
+
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <a href="/" class="inline-flex flex-col items-center gap-3 group">
+                <div
+                    class="w-14 h-14 bg-primary-500 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/30 group-hover:shadow-primary-500/50 transition-shadow">
+                    <i data-lucide="book-open" class="w-7 h-7 text-white"></i>
+                </div>
+                <span class="font-display text-3xl text-white">Biblio<span class="text-primary-400">UNI</span></span>
+            </a>
+            <p class="text-slate-400 mt-2 text-sm">Sistema de Biblioteca Universitaria</p>
+        </div>
+
+        <!-- Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
+            <h1 class="text-xl font-semibold text-white mb-6">Bienvenido de vuelta</h1>
+
+            <!-- Error de login -->
+            <div th:if="${param.error}"
+                class="flex items-center gap-2 bg-red-900/40 border border-red-700/50 text-red-300 text-sm px-4 py-3 rounded-xl mb-5">
+                <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+                <span>Correo o contraseña incorrectos.</span>
+            </div>
+
+            <!-- Logout message -->
+            <div th:if="${param.logout}"
+                class="flex items-center gap-2 bg-emerald-900/40 border border-emerald-700/50 text-emerald-300 text-sm px-4 py-3 rounded-xl mb-5">
+                <i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
+                <span>Sesión cerrada correctamente.</span>
+            </div>
+
+            <!-- Flash success (registro) -->
+            <div th:if="${success}"
+                class="flex items-center gap-2 bg-emerald-900/40 border border-emerald-700/50 text-emerald-300 text-sm px-4 py-3 rounded-xl mb-5">
+                <i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
+                <span th:text="${success}"></span>
+            </div>
+
+            <form th:action="@{/auth/login}" method="post" class="space-y-5">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <!-- Email -->
+                <div class="space-y-1.5">
+                    <label for="username" class="block text-sm font-medium text-slate-300">Correo electrónico</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                            <i data-lucide="mail" class="w-4 h-4 text-slate-500"></i>
+                        </div>
+                        <input type="email" id="email" name="email" required autocomplete="email"
+                            placeholder="tu@universidad.edu.pe"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all" />
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="space-y-1.5">
+                    <label for="password" class="block text-sm font-medium text-slate-300">Contraseña</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                            <i data-lucide="lock" class="w-4 h-4 text-slate-500"></i>
+                        </div>
+                        <input :type="showPass ? 'text' : 'password'" id="password" name="password" required
+                            placeholder="••••••••"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-12 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all" />
+                        <button type="button" @click="showPass = !showPass"
+                            class="absolute inset-y-0 right-3.5 flex items-center text-slate-500 hover:text-slate-300 transition-colors">
+                            <i data-lucide="eye" class="w-4 h-4" x-show="!showPass"></i>
+                            <i data-lucide="eye-off" class="w-4 h-4" x-show="showPass"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30 active:scale-[.98]">
+                    Iniciar sesión
+                </button>
+            </form>
+
+            <p class="text-center text-sm text-slate-500 mt-6">
+                ¿No tienes cuenta?
+                <a th:href="@{/auth/registro}" class="text-primary-400 hover:text-primary-300 font-medium">Regístrate
+                    aquí</a>
+            </p>
+        </div>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+
+</html>

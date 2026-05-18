@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: html('Catálogo', ~{::main-content})}"
+    lang="es">
+
+<body>
+
+    <main th:fragment="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- HERO -->
+
+        <div class="text-center mb-10">
+
+            <h1 class="text-4xl font-bold text-white mb-4">
+                Biblioteca Digital
+            </h1>
+
+            <p class="text-slate-400 mb-6">
+                Explora miles de libros gratuitos
+            </p>
+
+            <!-- SEARCH -->
+
+            <form th:action="@{/catalogo}" method="get" class="max-w-xl mx-auto flex gap-3">
+
+                <input type="text" name="q" th:value="${q}" placeholder="Buscar libros..."
+                    class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white" />
+
+                <button type="submit" class="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl">
+
+                    Buscar
+
+                </button>
+
+            </form>
+
+        </div>
+
+        <!-- ALERTAS -->
+
+        <!-- Éxito -->
+        <div th:if="${success}"
+            class="mb-6 bg-emerald-500/20 border border-emerald-500 text-emerald-300 px-4 py-3 rounded-xl">
+            <span th:text="${success}">Solicitud enviada.</span>
+        </div>
+
+        <!-- Error -->
+        <div th:if="${error}" class="mb-6 bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-xl">
+            <span th:text="${error}">Ocurrió un error.</span>
+        </div>
+
+        <!-- GRID -->
+
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-5">
+
+            <div th:each="libro : ${libros}" class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+
+                <!-- IMAGE -->
+
+                <div class="aspect-[2/3] bg-slate-800 overflow-hidden relative">
+
+                    <img th:src="${libro.formats['image/jpeg']}" th:alt="${libro.title}"
+                        class="w-full h-full object-cover" onerror="this.src='/img/no-cover.png'">
+
+                </div>
+
+                <!-- INFO -->
+
+                <div class="p-4">
+
+                    <h3 class="text-sm font-bold text-white line-clamp-2 mb-2" th:text="${libro.title}">
+                    </h3>
+
+                    <p class="text-xs text-slate-400 mb-4" th:text="${#lists.isEmpty(libro.authors)
+                   ? 'Autor desconocido'
+                   : libro.authors[0].name}">
+                    </p>
+
+                    <!-- BOTÓN -->
+
+                    <form th:action="@{/prestamos/formulario}" method="post">
+
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                        <input type="hidden" name="gutendexId" th:value="${libro.id}" />
+
+                        <input type="hidden" name="titulo" th:value="${libro.title}" />
+
+                        <input type="hidden" name="autor" th:value="${#lists.isEmpty(libro.authors)
+                           ? 'Autor desconocido'
+                           : libro.authors[0].name}" />
+
+                        <input type="hidden" name="cover" th:value="${libro.formats['image/jpeg']}" />
+
+                        <input type="hidden" name="pdfUrl" th:value="${libro.formats['application/pdf']}" />
+
+                        <input type="hidden" name="htmlUrl" th:value="${libro.formats['text/html']}" />
+
+                        <button type="submit"
+                            class="w-full bg-yellow-500 hover:bg-yellow-600 text-black text-xs py-2 rounded-lg font-semibold">
+
+                            Solicitar Libro
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</body>
+
+</html>

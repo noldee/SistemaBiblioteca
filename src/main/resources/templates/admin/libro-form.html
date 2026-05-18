@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/layout :: html(${libro.id == null ? 'Nuevo Libro' : 'Editar Libro'}, ~{::main-content})}"
+    lang="es">
+
+<head>
+    <title>Libro Form</title>
+</head>
+
+<body>
+    <main th:fragment="main-content" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="libroForm()"
+        x-init="init()">
+
+        <!-- Header -->
+        <div class="flex items-center gap-4 mb-8 anim-fadeinup">
+            <a th:href="@{/admin/libros}"
+                class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <div class="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                    <a th:href="@{/admin}" class="hover:text-slate-300">Admin</a>
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    <a th:href="@{/admin/libros}" class="hover:text-slate-300">Libros</a>
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    <span class="text-slate-300" th:text="${libro.id == null ? 'Nuevo' : 'Editar'}">Nuevo</span>
+                </div>
+                <h1 class="font-display text-3xl text-white font-bold"
+                    th:text="${libro.id == null ? 'Nuevo Libro' : 'Editar: ' + libro.titulo}">Nuevo Libro</h1>
+            </div>
+        </div>
+
+        <!-- Error global -->
+        <div th:if="${error}"
+            class="flex items-center gap-2 bg-red-900/40 border border-red-700/50 text-red-300 text-sm px-4 py-3 rounded-xl mb-6 anim-fadeinup">
+            <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- ISBN Lookup banner -->
+        <div class="bg-slate-900 border border-primary-500/30 rounded-2xl p-5 mb-6 anim-fadeinup anim-delay-1">
+            <p class="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-4 h-4 text-primary-400"></i>
+                Autocompletar desde Open Library (ISBN)
+            </p>
+            <div class="flex gap-3">
+                <input type="text" x-model="isbnQuery" placeholder="Ej: 9780547928227"
+                    @keydown.enter.prevent="buscarIsbn"
+                    class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
+                <button type="button" @click="buscarIsbn" :disabled="loading"
+                    class="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-medium transition-colors flex items-center gap-2">
+                    <span x-show="!loading">Buscar</span>
+                    <span x-show="loading" x-cloak class="flex items-center gap-2">
+                        <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        Buscando...
+                    </span>
+                </button>
+            </div>
+            <p x-show="isbnError" x-cloak x-text="isbnError" class="text-red-400 text-xs mt-2"></p>
+            <p x-show="isbnSuccess" x-cloak class="text-emerald-400 text-xs mt-2 flex items-center gap-1">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> ¡Datos cargados correctamente!
+            </p>
+        </div>
+
+        <!-- Form -->
+        <form th:action="${libro.id == null ? '/admin/libros/nuevo' : '/admin/libros/' + libro.id + '/editar'}"
+            method="post" th:object="${libro}" class="grid grid-cols-1 lg:grid-cols-3 gap-6 anim-fadeinup anim-delay-2">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <input type="hidden" th:field="*{id}" />
+
+            <!-- Left: Preview de portada -->
+            <div class="lg:col-span-1">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 sticky top-24">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Portada</p>
+                    <div
+                        class="aspect-[2/3] bg-slate-800 rounded-xl overflow-hidden mb-4 flex items-center justify-center">
+                        <img :src="coverPreview || th_cover"
+                            x-bind:src="coverPreview || (document.getElementById('coverUrlField')?.value || '/img/no-cover.png')"
+                            alt="Portada" class="w-full h-full object-cover"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                            id="coverPreviewImg" />
+                        <div
+                            class="hidden flex-col items-center justify-center text-slate-600 w-full h-full absolute inset-0">
+                            <i data-lucide="image-off" class="w-10 h-10 mb-2"></i>
+                            <span class="text-xs">Sin portada</span>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-medium text-slate-400">URL de portada</label>
+                        <input type="text" th:field="*{coverUrl}" id="coverUrlField"
+                            @input="coverPreview = $event.target.value" x-model="coverPreview" placeholder="https://..."
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Campos -->
+            <div class="lg:col-span-2 space-y-5">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Información del libro</p>
+
+                    <!-- ISBN -->
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-slate-300">ISBN <span
+                                class="text-red-400">*</span></label>
+                        <input type="text" th:field="*{isbn}" x-model="form.isbn" placeholder="978-..."
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                            th:classappend="${#fields.hasErrors('isbn')} ? 'border-red-500' : ''" />
+                        <p th:if="${#fields.hasErrors('isbn')}" th:errors="*{isbn}" class="text-red-400 text-xs"></p>
+                    </div>
+
+                    <!-- Título -->
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-slate-300">Título <span
+                                class="text-red-400">*</span></label>
+                        <input type="text" th:field="*{titulo}" x-model="form.titulo"
+                            placeholder="Título completo del libro"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                            th:classappend="${#fields.hasErrors('titulo')} ? 'border-red-500' : ''" />
+                        <p th:if="${#fields.hasErrors('titulo')}" th:errors="*{titulo}" class="text-red-400 text-xs">
+                        </p>
+                    </div>
+
+                    <!-- Autor -->
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-slate-300">Autor <span
+                                class="text-red-400">*</span></label>
+                        <input type="text" th:field="*{autor}" x-model="form.autor" placeholder="Nombre del autor"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                            th:classappend="${#fields.hasErrors('autor')} ? 'border-red-500' : ''" />
+                        <p th:if="${#fields.hasErrors('autor')}" th:errors="*{autor}" class="text-red-400 text-xs"></p>
+                    </div>
+
+                    <!-- Editorial + Año -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-sm font-medium text-slate-300">Editorial</label>
+                            <input type="text" th:field="*{editorial}" x-model="form.editorial" placeholder="Editorial"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="block text-sm font-medium text-slate-300">Año</label>
+                            <input type="number" th:field="*{anioPublicacion}" x-model="form.anioPublicacion"
+                                placeholder="2024"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
+                        </div>
+                    </div>
+
+                    <!-- Categoría -->
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-slate-300">Categoría</label>
+                        <div class="relative">
+                            <input type="text" th:field="*{categoria}" x-model="form.categoria"
+                                placeholder="Tecnología, Literatura, Ciencias..." list="categorias-list"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
+                            <datalist id="categorias-list">
+                                <option th:each="cat : ${categorias}" th:value="${cat}"></option>
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <!-- Ejemplares -->
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-slate-300">Ejemplares totales <span
+                                class="text-red-400">*</span></label>
+                        <input type="number" th:field="*{ejemplaresTotal}" min="1" placeholder="1"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                            th:classappend="${#fields.hasErrors('ejemplaresTotal')} ? 'border-red-500' : ''" />
+                        <p th:if="${#fields.hasErrors('ejemplaresTotal')}" th:errors="*{ejemplaresTotal}"
+                            class="text-red-400 text-xs"></p>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-slate-300">Descripción</label>
+                        <textarea th:field="*{descripcion}" x-model="form.descripcion" rows="4"
+                            placeholder="Sinopsis o descripción del libro..."
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all resize-none"></textarea>
+                    </div>
+
+                    <!-- PDF URL -->
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-slate-300 flex items-center gap-2">
+                            <i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i>
+                            URL del PDF (opcional)
+                        </label>
+                        <input type="text" th:field="*{pdfUrl}" placeholder="https://... (enlace al PDF del libro)"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center justify-end gap-3">
+                    <a th:href="@{/admin/libros}"
+                        class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-colors">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                        class="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-sm font-medium transition-all shadow-lg shadow-primary-500/20 flex items-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        <span th:text="${libro.id == null ? 'Crear libro' : 'Guardar cambios'}">Guardar</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        function libroForm() {
+            return {
+                isbnQuery: '',
+                loading: false,
+                isbnError: '',
+                isbnSuccess: false,
+                coverPreview: '',
+                form: {
+                    isbn: '', titulo: '', autor: '', editorial: '',
+                    anioPublicacion: '', categoria: '', descripcion: ''
+                },
+                init() {
+                    // Inicializar coverPreview con el valor actual
+                    const coverField = document.getElementById('coverUrlField');
+                    if (coverField?.value) this.coverPreview = coverField.value;
+                },
+                async buscarIsbn() {
+                    if (!this.isbnQuery.trim()) return;
+                    this.loading = true;
+                    this.isbnError = '';
+                    this.isbnSuccess = false;
+                    try {
+                        const res = await fetch(`/admin/libros/buscar-isbn?isbn=${encodeURIComponent(this.isbnQuery)}`);
+                        if (!res.ok) throw new Error('ISBN no encontrado');
+                        const data = await res.json();
+                        // Rellenar campos
+                        if (data.titulo) document.querySelector('[name="titulo"]').value = data.titulo;
+                        if (data.autor) document.querySelector('[name="autor"]').value = data.autor;
+                        if (data.isbn) document.querySelector('[name="isbn"]').value = data.isbn;
+                        if (data.editorial) document.querySelector('[name="editorial"]').value = data.editorial;
+                        if (data.anioPublicacion) document.querySelector('[name="anioPublicacion"]').value = data.anioPublicacion;
+                        if (data.descripcion) document.querySelector('[name="descripcion"]').value = data.descripcion;
+                        if (data.coverUrl) {
+                            document.getElementById('coverUrlField').value = data.coverUrl;
+                            this.coverPreview = data.coverUrl;
+                        }
+                        this.isbnSuccess = true;
+                        setTimeout(() => this.isbnSuccess = false, 3000);
+                    } catch (e) {
+                        this.isbnError = 'No se encontró información para ese ISBN en Open Library.';
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

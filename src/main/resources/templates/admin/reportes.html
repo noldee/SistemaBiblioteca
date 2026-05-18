@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: html('Reportes', ~{::main-content})}"
+    lang="es">
+
+<head>
+    <title>Reportes</title>
+</head>
+
+<body>
+    <main th:fragment="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 anim-fadeinup">
+            <div>
+                <div class="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                    <a th:href="@{/admin}" class="hover:text-slate-300">Admin</a>
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    <span class="text-slate-300">Reportes</span>
+                </div>
+                <h1 class="font-display text-3xl text-white font-bold">Reportes</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <a th:href="@{/admin/reportes/pdf(tipo='prestamos')}"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-red-900/40 hover:bg-red-900/60 text-red-300 border border-red-800 rounded-xl text-sm font-medium transition-colors">
+                    <i data-lucide="file-down" class="w-4 h-4"></i> PDF Préstamos
+                </a>
+                <a th:href="@{/admin/reportes/excel(tipo='prestamos')}"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-emerald-900/40 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800 rounded-xl text-sm font-medium transition-colors">
+                    <i data-lucide="table" class="w-4 h-4"></i> Excel Préstamos
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Más prestados -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 anim-fadeinup">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="font-semibold text-white flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-5 h-5 text-primary-400"></i>
+                        Libros más prestados
+                    </h2>
+                    <a th:href="@{/admin/reportes/pdf(tipo='libros')}"
+                        class="text-xs text-slate-500 hover:text-slate-300 flex items-center gap-1">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> PDF
+                    </a>
+                </div>
+                <div class="space-y-3">
+                    <div th:if="${#lists.isEmpty(masPrestados)}" class="text-center py-8 text-slate-500 text-sm">
+                        Sin datos disponibles
+                    </div>
+                    <div th:each="libro, stat : ${masPrestados}" class="flex items-center gap-4 group">
+                        <span class="w-6 text-center text-sm font-bold text-slate-600"
+                            th:text="${stat.index + 1}">1</span>
+                        <img th:src="${libro.coverUrlResolved}" alt=""
+                            class="w-8 h-11 object-cover rounded bg-slate-700 shrink-0"
+                            onerror="this.src='/img/no-cover.png'" />
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-slate-200 truncate" th:text="${libro.titulo}">Título</p>
+                            <p class="text-xs text-slate-500" th:text="${libro.autor}">Autor</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-slate-500">disponibles</p>
+                            <p class="text-sm font-semibold"
+                                th:classappend="${libro.ejemplaresDisponibles == 0} ? 'text-red-400' : 'text-emerald-400'"
+                                th:text="${libro.ejemplaresDisponibles} + '/' + ${libro.ejemplaresTotal}">0/0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usuarios con mora -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 anim-fadeinup anim-delay-1">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="font-semibold text-white flex items-center gap-2">
+                        <i data-lucide="triangle-alert" class="w-5 h-5 text-amber-400"></i>
+                        Usuarios con mora
+                    </h2>
+                    <a th:href="@{/admin/reportes/pdf(tipo='mora')}"
+                        class="text-xs text-slate-500 hover:text-slate-300 flex items-center gap-1">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> PDF
+                    </a>
+                </div>
+                <div class="space-y-3">
+                    <div th:if="${#lists.isEmpty(usuariosConMora)}"
+                        class="text-center py-8 text-emerald-500/60 text-sm">
+                        <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 opacity-60"></i>
+                        ¡Sin usuarios en mora!
+                    </div>
+                    <div th:each="usuario : ${usuariosConMora}"
+                        class="flex items-center gap-3 p-3 bg-red-900/10 border border-red-900/30 rounded-xl">
+                        <div class="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center text-sm font-semibold text-red-400 shrink-0"
+                            th:text="${#strings.substring(usuario.nombre, 0, 1).toUpperCase()}">U</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-white truncate" th:text="${usuario.nombreCompleto}">
+                                Nombre</p>
+                            <p class="text-xs text-slate-500 truncate" th:text="${usuario.email}">email</p>
+                        </div>
+                        <span class="text-xs bg-red-900/50 text-red-400 px-2.5 py-1 rounded-full font-medium">
+                            <span th:text="${usuario.prestamosActivos}">0</span> activo(s)
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Descargas disponibles -->
+            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 anim-fadeinup anim-delay-2">
+                <h2 class="font-semibold text-white mb-5 flex items-center gap-2">
+                    <i data-lucide="download-cloud" class="w-5 h-5 text-primary-400"></i>
+                    Descargar reportes
+                </h2>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <a th:href="@{/admin/reportes/pdf(tipo='prestamos')}"
+                        class="flex flex-col items-center gap-3 p-5 bg-red-900/20 hover:bg-red-900/30 border border-red-900/40 rounded-2xl transition-colors group">
+                        <div
+                            class="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center group-hover:bg-red-500/30 transition-colors">
+                            <i data-lucide="file-text" class="w-5 h-5 text-red-400"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-slate-300">Préstamos</p>
+                            <p class="text-xs text-slate-500">PDF</p>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/reportes/excel(tipo='prestamos')}"
+                        class="flex flex-col items-center gap-3 p-5 bg-emerald-900/20 hover:bg-emerald-900/30 border border-emerald-900/40 rounded-2xl transition-colors group">
+                        <div
+                            class="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
+                            <i data-lucide="table-2" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-slate-300">Préstamos</p>
+                            <p class="text-xs text-slate-500">Excel</p>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/reportes/pdf(tipo='mora')}"
+                        class="flex flex-col items-center gap-3 p-5 bg-amber-900/20 hover:bg-amber-900/30 border border-amber-900/40 rounded-2xl transition-colors group">
+                        <div
+                            class="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center group-hover:bg-amber-500/30 transition-colors">
+                            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-slate-300">Mora</p>
+                            <p class="text-xs text-slate-500">PDF</p>
+                        </div>
+                    </a>
+                    <a th:href="@{/admin/reportes/excel(tipo='mora')}"
+                        class="flex flex-col items-center gap-3 p-5 bg-blue-900/20 hover:bg-blue-900/30 border border-blue-900/40 rounded-2xl transition-colors group">
+                        <div
+                            class="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                            <i data-lucide="file-spreadsheet" class="w-5 h-5 text-blue-400"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-slate-300">Mora</p>
+                            <p class="text-xs text-slate-500">Excel</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

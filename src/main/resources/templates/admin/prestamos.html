@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/layout :: html('Gestión de Préstamos', ~{::main-content})}" lang="es">
+
+<head>
+    <title>Préstamos</title>
+</head>
+
+<body>
+    <main th:fragment="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 anim-fadeinup">
+            <div>
+                <div class="flex items-center gap-2 text-slate-500 text-sm mb-1">
+                    <a th:href="@{/admin}" class="hover:text-slate-300">Admin</a>
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    <span class="text-slate-300">Préstamos</span>
+                </div>
+                <h1 class="font-display text-3xl text-white font-bold">Gestión de Préstamos</h1>
+            </div>
+            <!-- Botón procesar vencimientos -->
+            <form th:action="@{/admin/prestamos/procesar-vencimientos}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit"
+                    class="flex items-center gap-2 px-4 py-2 bg-red-900/50 hover:bg-red-900 text-red-400 border border-red-800 rounded-xl text-sm font-medium transition-colors">
+                    <i data-lucide="clock-alert" class="w-4 h-4"></i> Procesar vencimientos
+                </button>
+            </form>
+        </div>
+
+        <!-- Alertas flash -->
+        <div th:if="${success}"
+            class="mb-6 flex items-center gap-3 bg-emerald-500/20 border border-emerald-500 text-emerald-300 px-4 py-3 rounded-xl anim-fadeinup">
+            <i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
+            <span th:text="${success}"></span>
+        </div>
+        <div th:if="${error}"
+            class="mb-6 flex items-center gap-3 bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-xl anim-fadeinup">
+            <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- Filtros por estado -->
+        <div class="flex items-center gap-2 mb-6 flex-wrap anim-fadeinup anim-delay-1">
+            <a th:href="@{/admin/prestamos}" class="px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                th:classappend="${estadoFiltro == null} ? 'bg-primary-500 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'">
+                Todos
+            </a>
+            <a th:each="est : ${estados}" th:href="@{/admin/prestamos(estado=${est})}" th:text="${est}"
+                class="px-4 py-2 rounded-xl text-sm font-medium transition-all" th:classappend="${estadoFiltro == est.name()} ? 'bg-primary-500 text-white' :
+                               (${est.name() == 'PENDIENTE'} ? 'bg-amber-900/40 text-amber-400 hover:bg-amber-900/60' :
+                               (${est.name() == 'VENCIDO'} ? 'bg-red-900/40 text-red-400 hover:bg-red-900/60' :
+                               'bg-slate-800 text-slate-400 hover:bg-slate-700'))">
+            </a>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden anim-fadeinup anim-delay-2">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-slate-800">
+                            <th
+                                class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-6 py-4">
+                                Libro</th>
+                            <th
+                                class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-6 py-4 hidden md:table-cell">
+                                Usuario</th>
+                            <th
+                                class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-6 py-4">
+                                F. Préstamo</th>
+                            <th
+                                class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-6 py-4">
+                                F. Devolución</th>
+                            <th
+                                class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-6 py-4">
+                                Estado</th>
+                            <th
+                                class="text-right text-xs font-semibold text-slate-400 uppercase tracking-wider px-6 py-4">
+                                Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800">
+
+                        <!-- Sin resultados -->
+                        <tr th:if="${#lists.isEmpty(prestamos)}">
+                            <td colspan="6" class="text-center py-16 text-slate-500">
+                                <i data-lucide="clipboard-list" class="w-10 h-10 mx-auto mb-3 opacity-30"></i>
+                                <p class="text-sm">No se encontraron préstamos</p>
+                            </td>
+                        </tr>
+
+                        <!-- Filas -->
+                        <tr th:each="prestamo : ${prestamos}" class="hover:bg-slate-800/50 transition-colors"
+                            th:classappend="${prestamo.estado.name() == 'VENCIDO'} ? 'border-l-2 border-l-red-500' :
+                                           (${prestamo.estado.name() == 'PENDIENTE'} ? 'border-l-2 border-l-amber-500' : '')">
+
+                            <!-- Libro -->
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <img th:src="${prestamo.libro.coverUrlResolved}" alt="Cover"
+                                        class="w-8 h-11 object-cover rounded bg-slate-700 shrink-0"
+                                        onerror="this.src='/img/no-cover.png'" />
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-white truncate max-w-xs"
+                                            th:text="${prestamo.libro.titulo}">Título</p>
+                                        <p class="text-xs text-slate-500" th:text="${prestamo.libro.autor}">Autor</p>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Usuario -->
+                            <td class="px-6 py-4 hidden md:table-cell">
+                                <p class="text-sm text-slate-300" th:text="${prestamo.usuario.nombreCompleto}">Usuario
+                                </p>
+                                <p class="text-xs text-slate-500" th:text="${prestamo.usuario.email}">email</p>
+                                <!-- Email de contacto en notas -->
+                                <p th:if="${prestamo.notas != null and #strings.contains(prestamo.notas, 'Email:')}"
+                                    class="text-xs text-amber-400/70 mt-0.5" th:text="${prestamo.notas}">notas</p>
+                            </td>
+
+                            <!-- F. Préstamo -->
+                            <td class="px-6 py-4">
+                                <span class="text-sm text-slate-400"
+                                    th:text="${#temporals.format(prestamo.fechaPrestamo, 'dd/MM/yyyy')}">—</span>
+                            </td>
+
+                            <!-- F. Devolución -->
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-medium"
+                                    th:classappend="${prestamo.estado.name() == 'VENCIDO'} ? 'text-red-400' : 'text-slate-400'"
+                                    th:text="${#temporals.format(prestamo.fechaDevolucion, 'dd/MM/yyyy')}">—</span>
+                                <!-- Hora -->
+                                <p th:if="${prestamo.horaDevolucion != null}" class="text-xs text-slate-500 mt-0.5"
+                                    th:text="'hasta ' + ${prestamo.horaDevolucion}">hora</p>
+                                <!-- Mora -->
+                                <p th:if="${prestamo.estado.name() == 'VENCIDO'}" class="text-xs text-red-500 mt-0.5"
+                                    th:text="${prestamo.diasMora} + ' días de mora'">mora</p>
+                            </td>
+
+                            <!-- Estado -->
+                            <td class="px-6 py-4">
+                                <span class="text-xs px-2.5 py-1 rounded-full font-medium" th:classappend="${prestamo.estado.name() == 'ACTIVO'} ? 'bg-emerald-900/50 text-emerald-400' :
+                                                 (${prestamo.estado.name() == 'VENCIDO'} ? 'bg-red-900/50 text-red-400' :
+                                                 (${prestamo.estado.name() == 'DEVUELTO'} ? 'bg-slate-700 text-slate-400' :
+                                                 (${prestamo.estado.name() == 'PENDIENTE'} ? 'bg-amber-900/50 text-amber-400' :
+                                                 'bg-slate-700 text-slate-500')))"
+                                    th:text="${prestamo.estado}">Estado</span>
+                            </td>
+
+                            <!-- Acciones -->
+                            <td class="px-6 py-4 text-right">
+
+                                <!-- PENDIENTE: Aceptar / Rechazar -->
+                                <div th:if="${prestamo.estado.name() == 'PENDIENTE'}" class="flex gap-2 justify-end">
+                                    <form th:action="@{/admin/prestamos/{id}/aceptar(id=${prestamo.id})}" method="post">
+                                        <input type="hidden" th:name="${_csrf.parameterName}"
+                                            th:value="${_csrf.token}" />
+                                        <button type="submit"
+                                            class="px-3 py-1.5 bg-emerald-900/50 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
+                                            <i data-lucide="check" class="w-3.5 h-3.5"></i> Aceptar
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/admin/prestamos/{id}/rechazar(id=${prestamo.id})}" method="post"
+                                        x-data @submit.prevent="if(confirm('¿Rechazar esta solicitud?')) $el.submit()">
+                                        <input type="hidden" th:name="${_csrf.parameterName}"
+                                            th:value="${_csrf.token}" />
+                                        <button type="submit"
+                                            class="px-3 py-1.5 bg-red-900/50 hover:bg-red-900 text-red-400 border border-red-800 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
+                                            <i data-lucide="x" class="w-3.5 h-3.5"></i> Rechazar
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <!-- ACTIVO o VENCIDO: Devolver -->
+                                <form
+                                    th:if="${prestamo.estado.name() == 'ACTIVO' or prestamo.estado.name() == 'VENCIDO'}"
+                                    th:action="@{/admin/prestamos/{id}/devolver(id=${prestamo.id})}" method="post"
+                                    x-data @submit.prevent="if(confirm('¿Registrar devolución?')) $el.submit()">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <button type="submit"
+                                        class="px-3 py-1.5 bg-emerald-900/50 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ml-auto">
+                                        <i data-lucide="corner-down-left" class="w-3.5 h-3.5"></i> Devolver
+                                    </button>
+                                </form>
+
+                                <!-- DEVUELTO -->
+                                <span th:if="${prestamo.estado.name() == 'DEVUELTO'}"
+                                    class="text-xs text-slate-500 flex items-center gap-1 justify-end">
+                                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                    <span th:text="${prestamo.fechaDevolucionReal != null ?
+                                        #temporals.format(prestamo.fechaDevolucionReal, 'dd/MM/yyyy') : 'Devuelto'}">
+                                    </span>
+                                </span>
+
+                                <!-- RECHAZADO -->
+                                <span th:if="${prestamo.estado.name() == 'RECHAZADO'}"
+                                    class="text-xs text-red-500 flex items-center gap-1 justify-end">
+                                    <i data-lucide="x" class="w-3.5 h-3.5"></i> Rechazado
+                                </span>
+
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer tabla -->
+            <div th:unless="${#lists.isEmpty(prestamos)}"
+                class="px-6 py-3 border-t border-slate-800 text-xs text-slate-500 flex items-center justify-between">
+                <span><span th:text="${#lists.size(prestamos)}">0</span> préstamo(s)</span>
+                <span th:if="${estadoFiltro != null}" class="text-slate-600">
+                    Filtrando por: <span class="text-slate-400" th:text="${estadoFiltro}"></span>
+                </span>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

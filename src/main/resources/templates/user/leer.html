@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{fragments/layout :: html('Leer: ' + ${libro.titulo}, ~{::main-content})}" lang="es">
+
+<head>
+    <title>Leer</title>
+</head>
+
+<body>
+    <main th:fragment="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6 anim-fadeinup">
+            <div class="flex items-center gap-4">
+                <a th:href="@{/mis-prestamos}"
+                    class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <div>
+                    <p class="text-xs text-slate-500 mb-0.5">Leyendo</p>
+                    <h1 class="font-display text-xl text-white font-bold line-clamp-1" th:text="${libro.titulo}">Título
+                    </h1>
+                    <p class="text-sm text-slate-400" th:text="${libro.autor}">Autor</p>
+                </div>
+            </div>
+            <img th:src="${libro.coverUrlResolved}" alt=""
+                class="w-12 h-16 object-cover rounded-xl bg-slate-800 shadow-lg hidden sm:block"
+                onerror="this.src='/img/no-cover.png'" />
+        </div>
+
+        <!-- PDF Viewer -->
+        <div th:if="${libro.pdfUrl != null}"
+            class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl anim-fadeinup anim-delay-1">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4 text-primary-400"></i>
+                    <span class="text-sm text-slate-300 font-medium">Visor de PDF</span>
+                </div>
+                <a th:href="${libro.pdfUrl}" target="_blank"
+                    class="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition-colors">
+                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Abrir en nueva pestaña
+                </a>
+            </div>
+            <iframe th:src="${libro.pdfUrl}" class="w-full" style="height: 80vh;" frameborder="0" title="Lector de PDF">
+            </iframe>
+        </div>
+
+        <!-- Sin PDF -->
+        <div th:unless="${libro.pdfUrl != null}"
+            class="text-center py-20 bg-slate-900 border border-slate-800 rounded-2xl anim-fadeinup">
+            <i data-lucide="file-x" class="w-14 h-14 mx-auto mb-4 text-slate-600"></i>
+            <h3 class="text-lg font-medium text-slate-400 mb-2">PDF no disponible</h3>
+            <p class="text-sm text-slate-500 mb-6">Este libro no tiene una versión digital disponible.</p>
+            <a th:href="@{/mis-prestamos}"
+                class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-colors inline-flex items-center gap-2">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a mis préstamos
+            </a>
+        </div>
+    </main>
+</body>
+
+</html>
