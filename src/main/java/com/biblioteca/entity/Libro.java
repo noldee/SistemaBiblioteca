@@ -77,8 +77,9 @@ public class Libro {
     @Column(name = "html_url")
     private String htmlUrl;
 
+    @Size(max = 100)
     @Column(name = "gutendex_id", unique = true)
-    private Integer gutendexId;
+    private String gutendexId;
 
     @Column(nullable = false)
     @Builder.Default

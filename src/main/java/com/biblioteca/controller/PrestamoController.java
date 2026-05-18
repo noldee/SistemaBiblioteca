@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -36,8 +37,11 @@ public class PrestamoController {
             @ModelAttribute SolicitudPrestamoForm form,
             Model model) {
 
-        model.addAttribute("form", form);
+        if (form.getGutendexId() == null || form.getTitulo() == null) {
+            return "redirect:/catalogo";
+        }
 
+        model.addAttribute("form", form);
         return "user/formulario-prestamo";
     }
 
@@ -51,21 +55,11 @@ public class PrestamoController {
             Authentication authentication,
             RedirectAttributes flash) {
 
-        // LOG TEMPORAL - bórralo después
-        System.out.println("=== FORM RECIBIDO ===");
-        System.out.println("gutendexId: " + form.getGutendexId());
-        System.out.println("fechaDevolucion: " + form.getFechaDevolucion());
-        System.out.println("horaDevolucion: " + form.getHoraDevolucion());
-        System.out.println("email: " + form.getEmail());
-        System.out.println("====================");
-
-        // 1. Verificar null ANTES de cualquier comparación
         if (form.getFechaDevolucion() == null) {
             flash.addFlashAttribute("error", "Selecciona una fecha de devolución.");
             return "redirect:/catalogo";
         }
 
-        // 2. Permitir desde HOY en adelante (no mañana, para no confundir)
         if (form.getFechaDevolucion().isBefore(LocalDate.now())) {
             flash.addFlashAttribute("error", "La fecha no puede ser en el pasado.");
             return "redirect:/catalogo";
@@ -76,7 +70,6 @@ public class PrestamoController {
             return "redirect:/catalogo";
         }
 
-        // Email
         if (form.getEmail() == null || !form.getEmail().matches(
                 "^[\\w._%+\\-]+@[\\w.\\-]+\\.[a-zA-Z]{2,}$")) {
             flash.addFlashAttribute("error", "Correo electrónico no válido.");
@@ -87,6 +80,8 @@ public class PrestamoController {
                 .findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        // ✅ buscar libro existente o crear uno nuevo — cualquier usuario puede pedir el
+        // mismo libro
         Libro libro = libroRepository
                 .findByGutendexId(form.getGutendexId())
                 .orElse(null);
@@ -99,12 +94,24 @@ public class PrestamoController {
                     .coverUrl(form.getCover())
                     .pdfUrl(form.getPdfUrl())
                     .htmlUrl(form.getHtmlUrl())
-                    .isbn("GUTENDEX-" + form.getGutendexId())
-                    .ejemplaresTotal(1)
-                    .ejemplaresDisponibles(1)
+                    .isbn("OL-" + form.getGutendexId().replace("/works/", ""))
+                    .ejemplaresTotal(99) // ✅ digital = ejemplares ilimitados
+                    .ejemplaresDisponibles(99) // ✅ cualquiera puede pedirlo
                     .activo(true)
                     .build();
             libroRepository.save(libro);
+        }
+
+        // ✅ verificar que el mismo usuario no tenga ya ese libro PENDIENTE o ACTIVO
+        boolean yaLoTiene = prestamoRepository
+                .existsByUsuarioIdAndLibroIdAndEstadoIn(
+                        usuario.getId(),
+                        libro.getId(),
+                        List.of(EstadoPrestamo.PENDIENTE, EstadoPrestamo.ACTIVO));
+
+        if (yaLoTiene) {
+            flash.addFlashAttribute("error", "Ya tienes una solicitud activa o pendiente para este libro.");
+            return "redirect:/catalogo";
         }
 
         Prestamo prestamo = Prestamo.builder()

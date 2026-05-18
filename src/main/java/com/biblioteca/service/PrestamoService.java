@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -184,26 +185,29 @@ public class PrestamoService {
             throw new IllegalStateException("Solo se pueden aceptar solicitudes pendientes");
         }
 
-        if (!prestamo.getLibro().isDisponible()) {
-            throw new IllegalStateException("El libro ya no está disponible");
+        // ✅ si ejemplaresTotal es alto (digital), no decrementar ni validar
+        Libro libro = prestamo.getLibro();
+        if (libro.getEjemplaresTotal() <= 10) {
+            // libro físico — validar disponibilidad
+            if (!libro.isDisponible()) {
+                throw new IllegalStateException("El libro ya no está disponible");
+            }
+            libro.prestar();
+            libroRepository.save(libro);
         }
-
-        prestamo.getLibro().prestar();
-        libroRepository.save(prestamo.getLibro());
+        // si ejemplaresTotal > 10 = digital, no tocar ejemplares
 
         prestamo.setEstado(EstadoPrestamo.ACTIVO);
         prestamo = prestamoRepository.save(prestamo);
 
-        // Notificación interna
         crearNotificacion(prestamo.getUsuario(), prestamo,
                 "PRESTAMO_ACEPTADO",
-                "✅ Tu solicitud del libro '" + prestamo.getLibro().getTitulo() + "' fue aceptada. ¡Ya puedes leerlo!");
+                "✅ Tu solicitud del libro '" + libro.getTitulo() + "' fue aceptada. ¡Ya puedes leerlo!");
 
-        // Email al usuario
         emailService.enviarPrestamoAceptado(prestamo);
 
         log.info("Préstamo aceptado: id={} usuario={} libro={}",
-                prestamoId, prestamo.getUsuario().getEmail(), prestamo.getLibro().getTitulo());
+                prestamoId, prestamo.getUsuario().getEmail(), libro.getTitulo());
 
         return prestamo;
     }
@@ -226,6 +230,52 @@ public class PrestamoService {
         emailService.enviarPrestamoRechazado(prestamo);
 
         log.info("Préstamo rechazado: id={}", prestamoId);
+        return prestamo;
+    }
+
+    // ── Eliminar préstamo ─────────────────────────────────
+    public void eliminar(Long id) {
+        Prestamo prestamo = findById(id);
+
+        // si el libro estaba activo, devolver el ejemplar
+        if (prestamo.getEstado() == EstadoPrestamo.ACTIVO
+                || prestamo.getEstado() == EstadoPrestamo.VENCIDO) {
+            prestamo.getLibro().devolver();
+            libroRepository.save(prestamo.getLibro());
+        }
+
+        prestamoRepository.delete(prestamo);
+        log.info("Préstamo eliminado: id={}", id);
+    }
+
+    // ── Editar fechas ─────────────────────────────────────
+    public Prestamo editar(Long id, LocalDate fechaDevolucion, LocalTime horaDevolucion,
+            EstadoPrestamo estado, String notas) {
+        Prestamo prestamo = findById(id);
+
+        // si cambia a DEVUELTO desde ACTIVO/VENCIDO, devolver ejemplar
+        if (estado == EstadoPrestamo.DEVUELTO
+                && (prestamo.getEstado() == EstadoPrestamo.ACTIVO
+                        || prestamo.getEstado() == EstadoPrestamo.VENCIDO)) {
+            prestamo.getLibro().devolver();
+            libroRepository.save(prestamo.getLibro());
+            prestamo.setFechaDevolucionReal(LocalDateTime.now());
+        }
+
+        // si cambia a ACTIVO desde PENDIENTE, descontar ejemplar
+        if (estado == EstadoPrestamo.ACTIVO
+                && prestamo.getEstado() == EstadoPrestamo.PENDIENTE) {
+            prestamo.getLibro().prestar();
+            libroRepository.save(prestamo.getLibro());
+        }
+
+        prestamo.setFechaDevolucion(fechaDevolucion);
+        prestamo.setHoraDevolucion(horaDevolucion);
+        prestamo.setEstado(estado);
+        prestamo.setNotas(notas);
+
+        prestamo = prestamoRepository.save(prestamo);
+        log.info("Préstamo editado: id={}", id);
         return prestamo;
     }
 }

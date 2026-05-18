@@ -177,13 +177,11 @@
                                 <i data-lucide="user" class="w-4 h-4"></i> Mi cuenta
                             </a>
                             <div class="border-t border-slate-700"></div>
-                            <form th:action="@{/logout}" method="post">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                <a type="submit"
-                                    class="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-slate-700 transition-colors">
-                                    <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar sesión
-                                </a>
-                            </form>
+
+                            <a th:href="@{/auth/login}" 
+                                class="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-slate-700 transition-colors">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar sesión
+                            </a>
                         </div>
                     </div>
 

@@ -150,56 +150,77 @@
                             </td>
 
                             <!-- Acciones -->
+                            <!-- Acciones -->
                             <td class="px-6 py-4 text-right">
+                                <div class="flex flex-col gap-2 items-end">
 
-                                <!-- PENDIENTE: Aceptar / Rechazar -->
-                                <div th:if="${prestamo.estado.name() == 'PENDIENTE'}" class="flex gap-2 justify-end">
-                                    <form th:action="@{/admin/prestamos/{id}/aceptar(id=${prestamo.id})}" method="post">
-                                        <input type="hidden" th:name="${_csrf.parameterName}"
-                                            th:value="${_csrf.token}" />
-                                        <button type="submit"
-                                            class="px-3 py-1.5 bg-emerald-900/50 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
-                                            <i data-lucide="check" class="w-3.5 h-3.5"></i> Aceptar
-                                        </button>
-                                    </form>
-                                    <form th:action="@{/admin/prestamos/{id}/rechazar(id=${prestamo.id})}" method="post"
-                                        x-data @submit.prevent="if(confirm('¿Rechazar esta solicitud?')) $el.submit()">
-                                        <input type="hidden" th:name="${_csrf.parameterName}"
-                                            th:value="${_csrf.token}" />
-                                        <button type="submit"
-                                            class="px-3 py-1.5 bg-red-900/50 hover:bg-red-900 text-red-400 border border-red-800 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
-                                            <i data-lucide="x" class="w-3.5 h-3.5"></i> Rechazar
-                                        </button>
-                                    </form>
-                                </div>
+                                    <!-- PENDIENTE: Aceptar / Rechazar -->
+                                    <div th:if="${prestamo.estado.name() == 'PENDIENTE'}" class="flex gap-2">
+                                        <form th:action="@{/admin/prestamos/{id}/aceptar(id=${prestamo.id})}"
+                                            method="post">
+                                            <input type="hidden" th:name="${_csrf.parameterName}"
+                                                th:value="${_csrf.token}" />
+                                            <button type="submit"
+                                                class="px-3 py-1.5 bg-emerald-900/50 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
+                                                <i data-lucide="check" class="w-3.5 h-3.5"></i> Aceptar
+                                            </button>
+                                        </form>
+                                        <form th:action="@{/admin/prestamos/{id}/rechazar(id=${prestamo.id})}"
+                                            method="post" x-data
+                                            @submit.prevent="if(confirm('¿Rechazar esta solicitud?')) $el.submit()">
+                                            <input type="hidden" th:name="${_csrf.parameterName}"
+                                                th:value="${_csrf.token}" />
+                                            <button type="submit"
+                                                class="px-3 py-1.5 bg-red-900/50 hover:bg-red-900 text-red-400 border border-red-800 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
+                                                <i data-lucide="x" class="w-3.5 h-3.5"></i> Rechazar
+                                            </button>
+                                        </form>
+                                    </div>
 
-                                <!-- ACTIVO o VENCIDO: Devolver -->
-                                <form
-                                    th:if="${prestamo.estado.name() == 'ACTIVO' or prestamo.estado.name() == 'VENCIDO'}"
-                                    th:action="@{/admin/prestamos/{id}/devolver(id=${prestamo.id})}" method="post"
-                                    x-data @submit.prevent="if(confirm('¿Registrar devolución?')) $el.submit()">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                    <button type="submit"
-                                        class="px-3 py-1.5 bg-emerald-900/50 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ml-auto">
-                                        <i data-lucide="corner-down-left" class="w-3.5 h-3.5"></i> Devolver
-                                    </button>
-                                </form>
+                                    <!-- ACTIVO o VENCIDO: Devolver + Editar + Notificar -->
+                                    <div th:if="${prestamo.estado.name() == 'ACTIVO' or prestamo.estado.name() == 'VENCIDO'}"
+                                        class="flex gap-2">
+                                        <form th:action="@{/admin/prestamos/{id}/devolver(id=${prestamo.id})}"
+                                            method="post" x-data
+                                            @submit.prevent="if(confirm('¿Registrar devolución?')) $el.submit()">
+                                            <input type="hidden" th:name="${_csrf.parameterName}"
+                                                th:value="${_csrf.token}" />
+                                            <button type="submit"
+                                                class="px-3 py-1.5 bg-emerald-900/50 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
+                                                <i data-lucide="corner-down-left" class="w-3.5 h-3.5"></i> Devolver
+                                            </button>
+                                        </form>
+                                        <a th:href="@{/admin/prestamos/{id}/editar(id=${prestamo.id})}"
+                                            class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 border border-slate-600 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
+                                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Editar
+                                        </a>
+                                        <!-- ✅ NOTIFICAR -->
+                                        <form th:action="@{/admin/prestamos/{id}/notificar(id=${prestamo.id})}"
+                                            method="post">
+                                            <input type="hidden" th:name="${_csrf.parameterName}"
+                                                th:value="${_csrf.token}" />
+                                            <button type="submit"
+                                                class="px-3 py-1.5 bg-blue-900/50 hover:bg-blue-900 text-blue-400 border border-blue-800 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
+                                                <i data-lucide="bell" class="w-3.5 h-3.5"></i> Notificar
+                                            </button>
+                                        </form>
+                                    </div>
 
-                                <!-- DEVUELTO -->
-                                <span th:if="${prestamo.estado.name() == 'DEVUELTO'}"
-                                    class="text-xs text-slate-500 flex items-center gap-1 justify-end">
-                                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                                    <span th:text="${prestamo.fechaDevolucionReal != null ?
-                                        #temporals.format(prestamo.fechaDevolucionReal, 'dd/MM/yyyy') : 'Devuelto'}">
+                                    <!-- DEVUELTO — sin botones, solo fecha -->
+                                    <span th:if="${prestamo.estado.name() == 'DEVUELTO'}"
+                                        class="text-xs text-slate-500 flex items-center gap-1">
+                                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                        <span th:text="${prestamo.fechaDevolucionReal != null ?
+                #temporals.format(prestamo.fechaDevolucionReal, 'dd/MM/yyyy') : 'Devuelto'}"></span>
                                     </span>
-                                </span>
 
-                                <!-- RECHAZADO -->
-                                <span th:if="${prestamo.estado.name() == 'RECHAZADO'}"
-                                    class="text-xs text-red-500 flex items-center gap-1 justify-end">
-                                    <i data-lucide="x" class="w-3.5 h-3.5"></i> Rechazado
-                                </span>
+                                    <!-- RECHAZADO — sin botones -->
+                                    <span th:if="${prestamo.estado.name() == 'RECHAZADO'}"
+                                        class="text-xs text-red-500 flex items-center gap-1">
+                                        <i data-lucide="x" class="w-3.5 h-3.5"></i> Rechazado
+                                    </span>
 
+                                </div>
                             </td>
                         </tr>
                     </tbody>

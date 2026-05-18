@@ -7,8 +7,11 @@ import com.biblioteca.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -112,6 +115,30 @@ public class AdminController {
         return "admin/libro-form";
     }
 
+    @GetMapping("/prestamos/{id}/editar")
+    public String editarPrestamoForm(@PathVariable Long id, Model model) {
+        model.addAttribute("prestamo", prestamoService.findById(id));
+        model.addAttribute("estados", EstadoPrestamo.values());
+        return "admin/prestamo-editar";
+    }
+
+    @PostMapping("/prestamos/{id}/editar")
+    public String editarPrestamo(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDevolucion,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime horaDevolucion,
+            @RequestParam EstadoPrestamo estado,
+            @RequestParam(required = false) String notas,
+            RedirectAttributes flash) {
+        try {
+            prestamoService.editar(id, fechaDevolucion, horaDevolucion, estado, notas);
+            flash.addFlashAttribute("success", "Préstamo actualizado correctamente.");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/prestamos";
+    }
+
     @PostMapping("/libros/{id}/editar")
     public String actualizarLibro(
             @PathVariable Long id,
@@ -201,6 +228,19 @@ public class AdminController {
         try {
             prestamoService.aceptar(id);
             flash.addFlashAttribute("success", "✅ Préstamo aceptado. El usuario fue notificado.");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/prestamos";
+    }
+
+    @PostMapping("/prestamos/{id}/notificar")
+    public String notificarUsuario(@PathVariable Long id, RedirectAttributes flash) {
+        try {
+            Prestamo prestamo = prestamoService.findById(id);
+            emailService.enviarRecordatorioDevolucion(prestamo); // ✅ envía el correo
+            flash.addFlashAttribute("success",
+                    "📧 Notificación enviada a " + prestamo.getUsuario().getEmail());
         } catch (Exception e) {
             flash.addFlashAttribute("error", e.getMessage());
         }

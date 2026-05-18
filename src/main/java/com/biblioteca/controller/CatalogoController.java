@@ -1,9 +1,9 @@
 package com.biblioteca.controller;
 
-import com.biblioteca.dto.GutendexResponseDto;
+import com.biblioteca.dto.OpenLibraryResponseDto;
 
-import com.biblioteca.service.GutendexService;
 import com.biblioteca.service.NotificacionService;
+import com.biblioteca.service.OpenLibraryService;
 import com.biblioteca.service.PrestamoService;
 import com.biblioteca.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
@@ -14,13 +14,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-
-
 @Controller
 @RequiredArgsConstructor
 public class CatalogoController {
 
-        private final GutendexService gutendexService;
+        private final OpenLibraryService openLibraryService;
         private final PrestamoService prestamoService;
         private final UsuarioService usuarioService;
         private final NotificacionService notificacionService;
@@ -34,14 +32,16 @@ public class CatalogoController {
                         @RequestParam(defaultValue = "1") Integer page,
                         Model model) {
 
-                GutendexResponseDto response = gutendexService.buscarLibros(q, page);
+                OpenLibraryResponseDto response = openLibraryService.buscarLibros(q, page);
 
-                model.addAttribute("libros", response.getResults());
+                model.addAttribute("libros", response.getDocs());
                 model.addAttribute("q", q);
                 model.addAttribute("page", page);
 
+                // ✅ hay siguiente página si el total supera lo que ya mostramos
+                int totalMostrado = page * 15;
                 model.addAttribute("hasNext",
-                                response.getNext() != null);
+                                response.getNumFound() != null && response.getNumFound() > totalMostrado);
 
                 return "user/catalogo";
         }

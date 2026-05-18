@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: html('Editar Préstamo', ~{::main-content})}"
+    lang="es">
+
+<body>
+    <main th:fragment="main-content" class="max-w-xl mx-auto px-4 py-10">
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8">
+
+            <div class="flex items-center gap-2 text-slate-500 text-sm mb-6">
+                <a th:href="@{/admin/prestamos}" class="hover:text-slate-300">Préstamos</a>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                <span class="text-slate-300">Editar</span>
+            </div>
+
+            <h1 class="text-2xl font-bold text-white mb-6">Editar Préstamo</h1>
+
+            <!-- Info libro -->
+            <div class="flex items-center gap-3 mb-6 p-3 bg-slate-800 rounded-xl">
+                <img th:src="${prestamo.libro.coverUrlResolved}" class="w-10 h-14 object-cover rounded"
+                    onerror="this.onerror=null; this.src='https://via.placeholder.com/40x56?text=?'">
+                <div>
+                    <p class="text-white font-medium text-sm" th:text="${prestamo.libro.titulo}"></p>
+                    <p class="text-slate-400 text-xs" th:text="${prestamo.usuario.nombreCompleto}"></p>
+                    <p class="text-slate-500 text-xs" th:text="${prestamo.usuario.email}"></p>
+                </div>
+            </div>
+
+            <form th:action="@{/admin/prestamos/{id}/editar(id=${prestamo.id})}" method="post" class="space-y-5">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <!-- Estado -->
+                <div>
+                    <label class="text-sm text-slate-300">Estado</label>
+                    <select name="estado"
+                        class="w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white">
+                        <option th:each="est : ${estados}" th:value="${est}" th:text="${est}"
+                            th:selected="${est == prestamo.estado}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Fecha devolución -->
+                <div>
+                    <label class="text-sm text-slate-300">Fecha devolución</label>
+                    <input type="date" name="fechaDevolucion" required
+                        th:value="${#temporals.format(prestamo.fechaDevolucion, 'yyyy-MM-dd')}"
+                        class="w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white">
+                </div>
+
+                <!-- Hora devolución -->
+                <div>
+                    <label class="text-sm text-slate-300">Hora devolución</label>
+                    <input type="time" name="horaDevolucion" th:value="${prestamo.horaDevolucion}"
+                        class="w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white">
+                </div>
+
+                <!-- Notas -->
+                <div>
+                    <label class="text-sm text-slate-300">Notas</label>
+                    <textarea name="notas" rows="3" th:text="${prestamo.notas}"
+                        placeholder="Observaciones del préstamo..."
+                        class="w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white resize-none">
+                </textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="submit"
+                        class="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-3 rounded-xl font-semibold">
+                        Guardar cambios
+                    </button>
+                    <a th:href="@{/admin/prestamos}"
+                        class="flex-1 text-center bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-semibold">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+
+</html>

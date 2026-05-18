@@ -36,16 +36,17 @@
 
                 <div class="flex gap-4">
 
-                    <img th:src="${form.cover}" class="w-28 rounded-xl" onerror="this.src='/img/no-cover.png'">
+                    <!-- ✅ mostrar la URL en consola del navegador para debuggear -->
+                    <img th:src="${form.cover != null and !#strings.isEmpty(form.cover)}
+        ? ${form.cover}
+        : 'https://via.placeholder.com/130x190?text=Sin+Portada'" th:alt="${form.titulo}" class="w-28 rounded-xl"
+                        onerror="this.onerror=null; this.src='https://via.placeholder.com/130x190?text=Sin+Portada'">
 
                     <div>
-
-                        <h2 class="text-white font-bold text-lg" th:text="${form.titulo}">
-                        </h2>
-
-                        <p class="text-slate-400" th:text="${form.autor}">
-                        </p>
-
+                        <h2 class="text-white font-bold text-lg" th:text="${form.titulo}"></h2>
+                        <p class="text-slate-400" th:text="${form.autor}"></p>
+                        <!-- DEBUG temporal - bórralo después -->
+                        <p class="text-xs text-red-400" th:text="${form.cover}"></p>
                     </div>
 
                 </div>

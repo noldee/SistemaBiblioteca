@@ -19,7 +19,7 @@ public interface LibroRepository extends JpaRepository<Libro, Long> {
 
     List<Libro> findByCategoria(String categoria);
 
-    Optional<Libro> findByGutendexId(Integer gutendexId);
+    Optional<Libro> findByGutendexId(String gutendexId);
 
     @Query("""
             SELECT l FROM Libro l

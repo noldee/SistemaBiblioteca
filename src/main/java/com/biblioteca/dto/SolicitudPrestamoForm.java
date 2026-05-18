@@ -12,7 +12,7 @@ import java.time.LocalTime;
 @Builder
 public class SolicitudPrestamoForm {
 
-    private Integer gutendexId;
+    private String gutendexId;  // ✅ era Integer, Open Library usa Strings como "/works/OL34977686W"
     private String titulo;
     private String autor;
     private String cover;
@@ -24,5 +24,5 @@ public class SolicitudPrestamoForm {
     private LocalDate fechaDevolucion;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
-    private LocalTime horaDevolucion; // ← NUEVO
+    private LocalTime horaDevolucion;
 }
