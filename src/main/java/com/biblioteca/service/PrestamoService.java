@@ -147,8 +147,13 @@ public class PrestamoService {
                 LocalDate.now(), LocalDate.now().plusDays(dias));
     }
 
+    // PrestamoService.java - reemplaza este método
     public List<Prestamo> findVencidosSinActualizar() {
-        return prestamoRepository.findVencidosSinActualizar(LocalDate.now());
+        // Traer todos los ACTIVO y filtrar con isVencido() que ya compara fecha + hora
+        return prestamoRepository.findByEstado(EstadoPrestamo.ACTIVO)
+                .stream()
+                .filter(Prestamo::isVencido)
+                .toList();
     }
 
     public void marcarVencido(Prestamo prestamo) {
@@ -237,7 +242,7 @@ public class PrestamoService {
                 prestamo.getUsuario().getEmail(),
                 prestamo.getUsuario().getNombreCompleto(),
                 prestamo.getLibro().getTitulo());
-                
+
         log.info("Préstamo rechazado: id={}", prestamoId);
         return prestamo;
     }

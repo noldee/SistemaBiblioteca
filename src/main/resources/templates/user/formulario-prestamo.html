@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
+<!-- DESPUÉS -->
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6"
     th:replace="~{fragments/layout :: html('Solicitar Libro', ~{::main-content})}">
 
 <body>
@@ -54,13 +55,21 @@
                 <!-- EMAIL -->
 
                 <!-- EMAIL -->
+                <!-- REEMPLAZAR el input de email por esto -->
                 <div>
-                    <label class="text-sm text-slate-300">Correo electrónico</label>
-                    <input type="email" name="email" required placeholder="tu@correo.com"
-                        class="w-full mt-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white">
-                    <p class="text-xs text-slate-500 mt-1">Usaremos este correo para notificarte.</p>
+                    <label class="text-sm text-slate-300">
+                        Notificación enviada a
+                    </label>
+                    <div class="w-full mt-2 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 
+                text-slate-400 text-sm flex items-center gap-2">
+                        <i data-lucide="mail" class="w-4 h-4 text-slate-500"></i>
+                        <!-- Muestra el email del usuario logueado -->
+                        <span sec:authentication="principal.username">tu@correo.com</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">
+                        La notificación llegará a tu correo registrado.
+                    </p>
                 </div>
-
                 <!-- FECHA -->
 
                 <!-- FECHA Y HORA -->

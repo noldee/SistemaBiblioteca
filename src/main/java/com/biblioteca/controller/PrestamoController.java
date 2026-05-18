@@ -70,12 +70,6 @@ public class PrestamoController {
             return "redirect:/catalogo";
         }
 
-        if (form.getEmail() == null || !form.getEmail().matches(
-                "^[\\w._%+\\-]+@[\\w.\\-]+\\.[a-zA-Z]{2,}$")) {
-            flash.addFlashAttribute("error", "Correo electrónico no válido.");
-            return "redirect:/catalogo";
-        }
-
         Usuario usuario = usuarioRepository
                 .findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -120,7 +114,7 @@ public class PrestamoController {
                 .fechaDevolucion(form.getFechaDevolucion())
                 .horaDevolucion(form.getHoraDevolucion())
                 .estado(EstadoPrestamo.PENDIENTE)
-                .notas("Email: " + form.getEmail() + " | Solicitud desde catálogo")
+                .notas("Solicitud desde catálogo")
                 .build();
 
         prestamoRepository.save(prestamo);
