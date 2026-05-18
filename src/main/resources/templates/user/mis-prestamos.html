@@ -7,6 +7,48 @@
 </head>
 
 <body>
+    <script>
+        (function () {
+            function actualizarEstados() {
+                fetch('/mis-prestamos/estado')
+                    .then(r => r.json())
+                    .then(prestamos => {
+                        let cambios = false;
+                        prestamos.forEach(p => {
+                            const card = document.querySelector(`[data-prestamo-id="${p.id}"]`);
+                            if (!card) return;
+
+                            const badge = card.querySelector('.badge-estado');
+                            const btnLeer = card.querySelector('.btn-leer');
+                            const bloqueado = card.querySelector('.bloqueado-mora');
+
+                            // Si venció pero el badge dice ACTIVO
+                            if (p.vencido && badge && badge.textContent.trim() === 'ACTIVO') {
+                                badge.textContent = 'BLOQUEADO';
+                                badge.classList.remove('bg-emerald-900/50', 'text-emerald-400');
+                                badge.classList.add('bg-red-900/50', 'text-red-400');
+                                if (btnLeer) btnLeer.style.display = 'none';
+                                if (bloqueado) bloqueado.style.display = 'flex';
+                                cambios = true;
+                            }
+                        });
+
+                        // Si hubo cambios importantes, recargar para mostrar todo correcto
+                        if (cambios) {
+                            setTimeout(() => window.location.reload(), 2000);
+                        }
+                    })
+                    .catch(() => { }); // silencioso si falla
+            }
+
+            // Verificar cada 20 segundos
+            setInterval(actualizarEstados, 20000);
+            // Y también al volver a la pestaña
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) actualizarEstados();
+            });
+        })();
+    </script>
     <main th:fragment="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         <!-- Header -->
@@ -97,9 +139,11 @@
                                         <h3 class="text-base font-semibold text-white hover:text-primary-300 transition-colors"
                                             th:text="${prestamo.libro.titulo}">Título</h3>
                                     </a>
-                                    <span class="text-xs px-2.5 py-1 rounded-full font-medium shrink-0"
-                                        th:classappend="${prestamo.vencido} ? 'bg-red-900/50 text-red-400' : 'bg-emerald-900/50 text-emerald-400'"
-                                        th:text="${prestamo.vencido} ? 'VENCIDO' : 'ACTIVO'">Estado</span>
+                                    <span class="badge-estado text-xs px-2.5 py-1 rounded-full font-medium shrink-0" th:classappend="${prestamo.vencido or prestamo.estado.name() == 'VENCIDO'} ? 
+                    'bg-red-900/50 text-red-400' : 
+                    'bg-emerald-900/50 text-emerald-400'" th:text="${prestamo.vencido or prestamo.estado.name() == 'VENCIDO'} ? 
+             'BLOQUEADO' : 'ACTIVO'">
+                                    </span>
                                 </div>
                                 <p class="text-sm text-slate-400 mb-3" th:text="${prestamo.libro.autor}">Autor</p>
 
@@ -118,7 +162,7 @@
                                         <p th:if="${prestamo.horaDevolucion != null}" class="text-xs text-slate-500"
                                             th:text="'hasta las ' + ${prestamo.horaDevolucion}">—</p>
                                     </div>
-                                    <div th:if="${!prestamo.vencido}">
+                                    <div th:if="${!prestamo.vencido and prestamo.estado.name() != 'VENCIDO'}">
                                         <p class="text-xs text-slate-500">Tiempo restante</p>
                                         <p class="text-sm font-semibold text-emerald-400"
                                             th:text="${prestamo.diasRestantes} + ' día(s)'">0 días</p>
@@ -130,8 +174,9 @@
                                     </div>
                                 </div>
 
-                                <!-- Progress bar días restantes -->
-                                <div th:unless="${prestamo.vencido}" class="mb-4">
+                                <!-- Cambiar th:unless para cubrir ambos casos -->
+                                <div th:unless="${prestamo.vencido or prestamo.estado.name() == 'VENCIDO'}"
+                                    class="mb-4">
                                     <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                                         <!-- ✅ REEMPLAZAR POR ESTO -->
                                         <div class="h-full bg-emerald-500 rounded-full transition-all"
@@ -157,13 +202,13 @@
                                     <a th:if="${prestamo.libro.htmlUrl != null 
            and prestamo.estado.name() == 'ACTIVO' 
            and !prestamo.vencido}" th:href="${prestamo.libro.htmlUrl}" target="_blank"
-                                        class="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-medium">
+                                        class="btn-leer flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-medium">
                                         <i data-lucide="globe" class="w-3.5 h-3.5"></i> Leer Online
                                     </a>
 
                                     <!-- Bloqueado por mora -->
                                     <div th:if="${prestamo.vencido or prestamo.estado.name() == 'VENCIDO'}"
-                                        class="flex items-center gap-1.5 px-4 py-2 bg-red-900/30 text-red-400 border border-red-800/50 rounded-xl text-xs font-medium">
+                                        class="bloqueado-mora flex items-center gap-1.5 px-4 py-2 bg-red-900/30 text-red-400 border border-red-800/50 rounded-xl text-xs font-medium">
                                         <i data-lucide="lock" class="w-3.5 h-3.5"></i> Acceso bloqueado por mora
                                     </div>
 
@@ -210,6 +255,7 @@
                 <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Historial</h2>
                 <div class="space-y-2">
                     <div th:each="prestamo : ${prestamos.?[estado.name() == 'DEVUELTO']}"
+                        th:attr="data-prestamo-id=${prestamo.id}"
                         class="flex items-center gap-4 p-4 bg-slate-900 border border-slate-800 rounded-2xl opacity-70 hover:opacity-100 transition-opacity">
                         <img th:src="${prestamo.libro.coverUrlResolved}" alt=""
                             class="w-10 h-14 object-cover rounded-lg bg-slate-700 shrink-0"

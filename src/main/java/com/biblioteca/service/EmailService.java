@@ -1,7 +1,6 @@
 package com.biblioteca.service;
 
 import com.biblioteca.entity.Prestamo;
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,212 +23,268 @@ public class EmailService {
   @Value("${app.mail.enabled:true}")
   private boolean mailEnabled;
 
-  @Async
-  public void enviarRecordatorioDevolucion(Prestamo prestamo) {
-    if (!mailEnabled) {
-      log.info("[EMAIL SIMULADO] Recordatorio a {}", prestamo.getUsuario().getEmail());
-      return;
-    }
-    String cuerpo = """
-        <!DOCTYPE html>
-        <html>
-        <body style="font-family: sans-serif; max-width: 600px; margin: auto;">
-          <div style="background: #1e40af; color: white; padding: 24px; border-radius: 8px 8px 0 0;">
-            <h1 style="margin:0">📚 Biblioteca Universitaria</h1>
-          </div>
-          <div style="padding: 24px; background: #f8fafc; border: 1px solid #e2e8f0;">
-            <h2>Recordatorio de devolución</h2>
-            <p>Hola <strong>%s</strong>,</p>
-            <p>Te recordamos que debes devolver el libro <strong>"%s"</strong> antes del <strong>%s</strong>.</p>
-            <p>Por favor asegúrate de devolverlo a tiempo para evitar penalidades.</p>
-            <br>
-            <p>Gracias,<br>BiblioUNI</p>
-          </div>
-        </body>
-        </html>
-        """.formatted(
-        prestamo.getUsuario().getNombreCompleto(),
-        prestamo.getLibro().getTitulo(),
-        prestamo.getFechaDevolucion().toString());
-
-    enviar(prestamo.getUsuario().getEmail(), "📚 Recordatorio de devolución - BiblioUNI", cuerpo); // ✅ era enviarEmail
-  }
-  // ← ELIMINADA la línea "private final EmailService emailService"
-
-  @Async
-  public void enviarAvisoVencimiento(Prestamo prestamo) {
-    if (!mailEnabled) {
-      log.info("[EMAIL SIMULADO] Aviso vencimiento a {}", prestamo.getUsuario().getEmail());
-      return;
-    }
-    enviar(prestamo.getUsuario().getEmail(),
-        "⏰ Tu préstamo vence pronto - Biblioteca",
-        buildHtmlAviso(prestamo));
-  }
-
-  @Async
-  public void enviarNotificacionVencido(Prestamo prestamo) {
-    if (!mailEnabled) {
-      log.info("[EMAIL SIMULADO] Notificación vencido a {}", prestamo.getUsuario().getEmail());
-      return;
-    }
-    enviar(prestamo.getUsuario().getEmail(),
-        "🚨 Préstamo vencido - Acceso bloqueado",
-        buildHtmlVencido(prestamo));
-  }
-
+  // ─────────────────────────────────────────
+  // BIENVENIDA
+  // ─────────────────────────────────────────
   @Async
   public void enviarBienvenida(String email, String nombre) {
-    if (!mailEnabled)
-      return;
+
     String cuerpo = """
-        <h2>¡Hola, %s!</h2>
-        <p>Tu cuenta en la Biblioteca Universitaria ha sido creada exitosamente.</p>
-        <p>Puedes explorar nuestro catálogo y solicitar hasta 3 préstamos simultáneos.</p>
+        <h1>📚 Bienvenido</h1>
+
+        <p>Hola <b>%s</b></p>
+
+        <p>
+        Tu cuenta fue creada correctamente.
+        </p>
         """.formatted(nombre);
-    enviar(email, "¡Bienvenido a la Biblioteca! 📚", cuerpo);
+
+    enviar(email, "Bienvenido a Biblioteca", cuerpo);
   }
 
+  // ─────────────────────────────────────────
+  // PRÉSTAMO ACEPTADO
+  // ─────────────────────────────────────────
   @Async
-  public void enviarPrestamoAceptado(Prestamo prestamo) {
-    if (!mailEnabled) {
-      log.info("[EMAIL SIMULADO] Préstamo aceptado a {}", prestamo.getUsuario().getEmail());
-      return;
+  public void enviarPrestamoAceptado(
+      String email,
+      String nombre,
+      String titulo,
+      String fechaDevolucion,
+      String pdfUrl,
+      String htmlUrl) {
+
+    StringBuilder enlaces = new StringBuilder();
+
+    if (pdfUrl != null && !pdfUrl.isBlank()) {
+
+      enlaces.append("""
+          <br><br>
+
+          <a href="%s"
+             style="
+             background:#16a34a;
+             color:white;
+             padding:10px 18px;
+             border-radius:6px;
+             text-decoration:none;
+             display:inline-block;">
+             📄 Leer PDF
+          </a>
+          """.formatted(pdfUrl));
     }
+
+    if (htmlUrl != null && !htmlUrl.isBlank()) {
+
+      enlaces.append("""
+          <br><br>
+
+          <a href="%s"
+             style="
+             background:#2563eb;
+             color:white;
+             padding:10px 18px;
+             border-radius:6px;
+             text-decoration:none;
+             display:inline-block;">
+             🌐 Leer Online
+          </a>
+          """.formatted(htmlUrl));
+    }
+
     String cuerpo = """
-        <!DOCTYPE html>
-        <html>
-        <body style="font-family: sans-serif; max-width: 600px; margin: auto;">
-          <div style="background: #16a34a; color: white; padding: 24px; border-radius: 8px 8px 0 0;">
-            <h1 style="margin:0">📚 Biblioteca Universitaria</h1>
-          </div>
-          <div style="padding: 24px; background: #f0fdf4; border: 1px solid #bbf7d0;">
-            <h2>¡Tu solicitud fue aceptada!</h2>
-            <p>Hola <strong>%s</strong>,</p>
-            <p>El libro <strong>"%s"</strong> ya está disponible para ti.</p>
-            <p>Fecha límite de devolución: <strong>%s</strong></p>
-            %s
-          </div>
-        </body>
-        </html>
+        <h1>✅ Solicitud aceptada</h1>
+
+        <p>Hola <b>%s</b></p>
+
+        <p>
+        Tu préstamo del libro
+        <b>%s</b>
+        fue aprobado.
+        </p>
+
+        <p>
+        Fecha devolución:
+        <b>%s</b>
+        </p>
+
+        %s
         """.formatted(
-        prestamo.getUsuario().getNombreCompleto(),
-        prestamo.getLibro().getTitulo(),
-        prestamo.getFechaDevolucion(),
-        buildEnlacesLectura(prestamo));
-    enviar(prestamo.getUsuario().getEmail(),
-        "✅ Tu solicitud fue aceptada - Biblioteca", cuerpo);
+        nombre,
+        titulo,
+        fechaDevolucion,
+        enlaces.toString());
+
+    enviar(email, "Préstamo aprobado", cuerpo);
   }
 
+  // ─────────────────────────────────────────
+  // PRÉSTAMO RECHAZADO
+  // ─────────────────────────────────────────
   @Async
-  public void enviarPrestamoRechazado(Prestamo prestamo) {
-    if (!mailEnabled) {
-      log.info("[EMAIL SIMULADO] Préstamo rechazado a {}", prestamo.getUsuario().getEmail());
-      return;
-    }
+  public void enviarPrestamoRechazado(
+      String email,
+      String nombre,
+      String titulo) {
+
     String cuerpo = """
-        <!DOCTYPE html>
-        <html>
-        <body style="font-family: sans-serif; max-width: 600px; margin: auto;">
-          <div style="background: #dc2626; color: white; padding: 24px; border-radius: 8px 8px 0 0;">
-            <h1 style="margin:0">📚 Biblioteca Universitaria</h1>
-          </div>
-          <div style="padding: 24px; background: #fef2f2; border: 1px solid #fecaca;">
-            <h2>Solicitud no disponible</h2>
-            <p>Hola <strong>%s</strong>,</p>
-            <p>Lo sentimos, tu solicitud del libro <strong>"%s"</strong>
-               no pudo ser procesada en este momento.</p>
-            <p>Puedes intentarlo nuevamente más tarde o contactar a la biblioteca.</p>
-          </div>
-        </body>
-        </html>
+        <h1>❌ Solicitud rechazada</h1>
+
+        <p>Hola <b>%s</b></p>
+
+        <p>
+        Tu solicitud del libro
+        <b>%s</b>
+        fue rechazada.
+        </p>
+
+        <p>
+        Puedes volver a intentarlo más tarde.
+        </p>
+        """.formatted(nombre, titulo);
+
+    enviar(email, "Solicitud rechazada", cuerpo);
+  }
+
+  // ─────────────────────────────────────────
+  // RECORDATORIO
+  // ─────────────────────────────────────────
+  @Async
+  public void enviarRecordatorioDevolucion(
+      String email,
+      String nombre,
+      String titulo,
+      String fechaDevolucion) {
+
+    String cuerpo = """
+        <h1>📚 Recordatorio</h1>
+
+        <p>Hola %s</p>
+
+        <p>
+        Debes devolver el libro <b>%s</b>
+        antes del %s
+        </p>
+        """.formatted(
+        nombre,
+        titulo,
+        fechaDevolucion);
+
+    enviar(
+        email,
+        "Recordatorio devolución",
+        cuerpo);
+  }
+
+  // ─────────────────────────────────────────
+  // PRÉSTAMO VENCIDO
+  // ─────────────────────────────────────────
+  @Async
+  public void enviarNotificacionVencido(Prestamo prestamo) {
+
+    String cuerpo = """
+        <h1>⚠️ Préstamo vencido</h1>
+
+        <p>
+        Hola <b>%s</b>
+        </p>
+
+        <p>
+        El préstamo del libro
+        <b>%s</b>
+        ha vencido.
+        </p>
+
+        <p>
+        Regulariza tu situación en biblioteca.
+        </p>
         """.formatted(
         prestamo.getUsuario().getNombreCompleto(),
         prestamo.getLibro().getTitulo());
-    enviar(prestamo.getUsuario().getEmail(),
-        "❌ Solicitud no disponible - Biblioteca", cuerpo);
+
+    enviar(
+        prestamo.getUsuario().getEmail(),
+        "Préstamo vencido",
+        cuerpo);
   }
 
-  // ── Privados ──────────────────────────────────────────
+  // ─────────────────────────────────────────
+  // MÉTODO CENTRAL
+  // ─────────────────────────────────────────
+  private void enviar(
+      String destinatario,
+      String asunto,
+      String html) {
 
-  private void enviar(String destinatario, String asunto, String cuerpoHtml) {
+    if (!mailEnabled) {
+
+      log.warn("⚠️ Emails deshabilitados");
+
+      return;
+    }
+
+    if (destinatario == null || destinatario.isBlank()) {
+
+      log.error("❌ Destinatario vacío");
+
+      return;
+    }
+
     try {
+
       MimeMessage mensaje = mailSender.createMimeMessage();
-      MimeMessageHelper helper = new MimeMessageHelper(mensaje, true, "UTF-8");
+
+      MimeMessageHelper helper = new MimeMessageHelper(
+          mensaje,
+          true,
+          "UTF-8");
+
       helper.setFrom(from);
       helper.setTo(destinatario);
       helper.setSubject(asunto);
-      helper.setText(cuerpoHtml, true);
+
+      // true = HTML
+      helper.setText(html, true);
+
       mailSender.send(mensaje);
-      log.info("Email enviado a {}: {}", destinatario, asunto);
-    } catch (MessagingException e) {
-      log.error("Error enviando email a {}: {}", destinatario, e.getMessage());
+
+      log.info("✅ Email enviado a {}", destinatario);
+
+    } catch (Exception e) {
+
+      log.error("❌ ERROR ENVIANDO EMAIL");
+      log.error("Destino: {}", destinatario);
+      log.error("Asunto: {}", asunto);
+      log.error("Error: {}", e.getMessage());
+
+      e.printStackTrace();
     }
   }
 
-  private String buildEnlacesLectura(Prestamo prestamo) {
-    StringBuilder sb = new StringBuilder();
-    if (prestamo.getPdfUrl() != null && !prestamo.getPdfUrl().isBlank()) {
-      sb.append("""
-          <a href="%s" style="background:#16a34a;color:white;padding:10px 20px;
-             border-radius:6px;text-decoration:none;display:inline-block;margin:8px 4px 0 0;">
-            📄 Leer PDF
-          </a>
-          """.formatted(prestamo.getPdfUrl()));
-    }
-    if (prestamo.getHtmlUrl() != null && !prestamo.getHtmlUrl().isBlank()) {
-      sb.append("""
-          <a href="%s" style="background:#1e40af;color:white;padding:10px 20px;
-             border-radius:6px;text-decoration:none;display:inline-block;margin:8px 0 0 0;">
-            🌐 Leer Online
-          </a>
-          """.formatted(prestamo.getHtmlUrl()));
-    }
-    return sb.toString();
-  }
+  @Async
+  public void enviarAvisoVencimiento(Prestamo prestamo) {
 
-  private String buildHtmlAviso(Prestamo p) {
-    return """
-        <!DOCTYPE html>
-        <html>
-        <body style="font-family: sans-serif; max-width: 600px; margin: auto;">
-          <div style="background: #1e40af; color: white; padding: 24px; border-radius: 8px 8px 0 0;">
-            <h1 style="margin:0">📚 Biblioteca Universitaria</h1>
-          </div>
-          <div style="padding: 24px; background: #f8fafc; border: 1px solid #e2e8f0;">
-            <h2>Tu préstamo vence pronto</h2>
-            <p>Hola <strong>%s</strong>,</p>
-            <p>El libro <strong>"%s"</strong> debe ser devuelto el <strong>%s</strong>.</p>
-            <p>Te quedan <strong>%d día(s)</strong> para devolver y evitar el bloqueo.</p>
-          </div>
-        </body>
-        </html>
+    String cuerpo = """
+        <h1>⏰ Tu préstamo vence pronto</h1>
+
+        <p>
+        Hola <b>%s</b>
+        </p>
+
+        <p>
+        El libro <b>%s</b>
+        debe devolverse el día
+        <b>%s</b>
+        </p>
         """.formatted(
-        p.getUsuario().getNombreCompleto(),
-        p.getLibro().getTitulo(),
-        p.getFechaDevolucion(),
-        p.getDiasRestantes());
+        prestamo.getUsuario().getNombreCompleto(),
+        prestamo.getLibro().getTitulo(),
+        prestamo.getFechaDevolucion());
+
+    enviar(
+        prestamo.getUsuario().getEmail(),
+        "Préstamo próximo a vencer",
+        cuerpo);
   }
 
-  private String buildHtmlVencido(Prestamo p) {
-    return """
-        <!DOCTYPE html>
-        <html>
-        <body style="font-family: sans-serif; max-width: 600px; margin: auto;">
-          <div style="background: #dc2626; color: white; padding: 24px; border-radius: 8px 8px 0 0;">
-            <h1 style="margin:0">⚠️ Préstamo Vencido</h1>
-          </div>
-          <div style="padding: 24px; background: #fef2f2; border: 1px solid #fecaca;">
-            <h2>Tu acceso ha sido bloqueado</h2>
-            <p>Hola <strong>%s</strong>,</p>
-            <p>El préstamo del libro <strong>"%s"</strong> venció hace <strong>%d día(s)</strong>.</p>
-            <p>Acércate a la biblioteca para regularizar tu situación.</p>
-          </div>
-        </body>
-        </html>
-        """.formatted(
-        p.getUsuario().getNombreCompleto(),
-        p.getLibro().getTitulo(),
-        p.getDiasMora());
-  }
 }

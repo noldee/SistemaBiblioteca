@@ -7,6 +7,11 @@ import com.biblioteca.service.OpenLibraryService;
 import com.biblioteca.service.PrestamoService;
 import com.biblioteca.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -42,6 +47,8 @@ public class CatalogoController {
                 int totalMostrado = page * 15;
                 model.addAttribute("hasNext",
                                 response.getNumFound() != null && response.getNumFound() > totalMostrado);
+
+                model.addAttribute("hasPrev", page > 1);
 
                 return "user/catalogo";
         }
@@ -82,6 +89,27 @@ public class CatalogoController {
                 return "user/mis-prestamos";
         }
 
+        @GetMapping("/mis-prestamos/estado")
+        @ResponseBody
+        public ResponseEntity<List<Map<String, Object>>> estadoPrestamos(
+                        @AuthenticationPrincipal UserDetails userDetails) {
+
+                var usuario = usuarioService.findByEmail(userDetails.getUsername());
+                var prestamos = prestamoService.findByUsuario(usuario.getId());
+
+                List<Map<String, Object>> resultado = prestamos.stream().map(p -> {
+                        Map<String, Object> map = new java.util.HashMap<>();
+                        map.put("id", p.getId());
+                        map.put("estado", p.getEstado().name());
+                        map.put("vencido", p.isVencido());
+                        map.put("diasRestantes", p.getDiasRestantes());
+                        map.put("diasMora", p.getDiasMora());
+                        return map;
+                }).toList();
+
+                return ResponseEntity.ok(resultado);
+        }
+
         // ─────────────────────────────────────────────
         // DEVOLVER
         // ─────────────────────────────────────────────
@@ -106,5 +134,23 @@ public class CatalogoController {
                 }
 
                 return "redirect:/mis-prestamos";
+        }
+
+        // ─────────────────────────────────────────────
+        // Notificacion
+        // ─────────────────────────────────────────────
+        @GetMapping("/notificaciones")
+        @ResponseBody
+        public ResponseEntity<?> notificaciones(
+                        @AuthenticationPrincipal UserDetails userDetails) {
+                var usuario = usuarioService.findByEmail(userDetails.getUsername());
+                var notifs = notificacionService.findByUsuario(usuario.getId());
+                notificacionService.marcarTodasComoLeidas(usuario.getId());
+                return ResponseEntity.ok(notifs.stream().limit(5).map(n -> Map.of(
+                                "id", n.getId(),
+                                "mensaje", n.getMensaje(),
+                                "tipo", n.getTipo(),
+                                "leida", n.getLeida(),
+                                "fecha", n.getFecha().toString())).toList());
         }
 }

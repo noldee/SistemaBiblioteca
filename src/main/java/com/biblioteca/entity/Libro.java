@@ -112,11 +112,9 @@ public class Libro {
 
     public void devolver() {
 
-        if (ejemplaresDisponibles >= ejemplaresTotal) {
-            throw new IllegalStateException("No hay préstamos activos");
+        if (ejemplaresDisponibles < ejemplaresTotal) {
+            ejemplaresDisponibles++;
         }
-
-        ejemplaresDisponibles++;
     }
 
     public String getCoverUrlResolved() {

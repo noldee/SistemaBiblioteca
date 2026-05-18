@@ -139,6 +139,17 @@ public class AdminController {
         return "redirect:/admin/prestamos";
     }
 
+    @PostMapping("/prestamos/{id}/eliminar")
+    public String eliminarPrestamo(@PathVariable Long id, RedirectAttributes flash) {
+        try {
+            prestamoService.eliminar(id); // Asegúrate de tener este método en tu servicio
+            flash.addFlashAttribute("success", "Préstamo eliminado definitivamente.");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", "No se pudo eliminar el préstamo: " + e.getMessage());
+        }
+        return "redirect:/admin/prestamos";
+    }
+
     @PostMapping("/libros/{id}/editar")
     public String actualizarLibro(
             @PathVariable Long id,
@@ -235,15 +246,32 @@ public class AdminController {
     }
 
     @PostMapping("/prestamos/{id}/notificar")
-    public String notificarUsuario(@PathVariable Long id, RedirectAttributes flash) {
+    public String notificarUsuario(
+            @PathVariable Long id,
+            RedirectAttributes flash) {
+
         try {
+
             Prestamo prestamo = prestamoService.findById(id);
-            emailService.enviarRecordatorioDevolucion(prestamo); // ✅ envía el correo
-            flash.addFlashAttribute("success",
-                    "📧 Notificación enviada a " + prestamo.getUsuario().getEmail());
+
+            emailService.enviarRecordatorioDevolucion(
+                    prestamo.getUsuario().getEmail(),
+                    prestamo.getUsuario().getNombreCompleto(),
+                    prestamo.getLibro().getTitulo(),
+                    prestamo.getFechaDevolucion().toString());
+
+            flash.addFlashAttribute(
+                    "success",
+                    "📧 Notificación enviada a "
+                            + prestamo.getUsuario().getEmail());
+
         } catch (Exception e) {
-            flash.addFlashAttribute("error", e.getMessage());
+
+            flash.addFlashAttribute(
+                    "error",
+                    e.getMessage());
         }
+
         return "redirect:/admin/prestamos";
     }
 

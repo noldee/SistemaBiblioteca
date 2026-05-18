@@ -204,7 +204,13 @@ public class PrestamoService {
                 "PRESTAMO_ACEPTADO",
                 "✅ Tu solicitud del libro '" + libro.getTitulo() + "' fue aceptada. ¡Ya puedes leerlo!");
 
-        emailService.enviarPrestamoAceptado(prestamo);
+        emailService.enviarPrestamoAceptado(
+                prestamo.getUsuario().getEmail(),
+                prestamo.getUsuario().getNombreCompleto(),
+                prestamo.getLibro().getTitulo(),
+                prestamo.getFechaDevolucion().toString(),
+                prestamo.getPdfUrl(),
+                prestamo.getHtmlUrl());
 
         log.info("Préstamo aceptado: id={} usuario={} libro={}",
                 prestamoId, prestamo.getUsuario().getEmail(), libro.getTitulo());
@@ -227,25 +233,47 @@ public class PrestamoService {
                 "PRESTAMO_RECHAZADO",
                 "❌ Tu solicitud del libro '" + prestamo.getLibro().getTitulo() + "' fue rechazada.");
 
-        emailService.enviarPrestamoRechazado(prestamo);
-
+        emailService.enviarPrestamoRechazado(
+                prestamo.getUsuario().getEmail(),
+                prestamo.getUsuario().getNombreCompleto(),
+                prestamo.getLibro().getTitulo());
+                
         log.info("Préstamo rechazado: id={}", prestamoId);
         return prestamo;
     }
 
     // ── Eliminar préstamo ─────────────────────────────────
     public void eliminar(Long id) {
-        Prestamo prestamo = findById(id);
 
-        // si el libro estaba activo, devolver el ejemplar
-        if (prestamo.getEstado() == EstadoPrestamo.ACTIVO
-                || prestamo.getEstado() == EstadoPrestamo.VENCIDO) {
-            prestamo.getLibro().devolver();
-            libroRepository.save(prestamo.getLibro());
+        Prestamo prestamo = prestamoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Préstamo no encontrado"));
+
+        Libro libro = prestamo.getLibro();
+
+        // SOLO manejar stock si es libro físico
+        boolean esLibroFisico = libro.getEjemplaresTotal() <= 10;
+
+        // devolver ejemplar únicamente si estaba prestado
+        if (esLibroFisico &&
+                (prestamo.getEstado() == EstadoPrestamo.ACTIVO
+                        || prestamo.getEstado() == EstadoPrestamo.VENCIDO)) {
+
+            // evitar sobrepasar el stock máximo
+            if (libro.getEjemplaresDisponibles() < libro.getEjemplaresTotal()) {
+
+                libro.devolver();
+                libroRepository.save(libro);
+            }
+        }
+
+        // eliminar notificaciones asociadas primero
+        if (prestamo.getNotificaciones() != null) {
+            prestamo.getNotificaciones().clear();
         }
 
         prestamoRepository.delete(prestamo);
-        log.info("Préstamo eliminado: id={}", id);
+
+        log.info("Préstamo eliminado correctamente: id={}", id);
     }
 
     // ── Editar fechas ─────────────────────────────────────
