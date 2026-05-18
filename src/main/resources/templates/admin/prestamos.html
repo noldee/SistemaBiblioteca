@@ -22,7 +22,7 @@
             <form th:action="@{/admin/prestamos/procesar-vencimientos}" method="post" class="shrink-0">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <button type="submit"
-                    class="flex items-center gap-2 px-4 py-2.5 bg-red-950/40 hover:bg-red-900 text-red-400 border border-red-900/60 rounded-xl text-sm font-medium transition-all shadow-sm active:scale-98">
+                    class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-red-950/40 hover:bg-red-900 text-red-400 border border-red-900/60 rounded-xl text-sm font-medium transition-all shadow-sm active:scale-98">
                     <i data-lucide="clock-alert" class="w-4 h-4"></i> Procesar vencimientos
                 </button>
             </form>
@@ -55,16 +55,17 @@
 
         <div x-data="prestamoForm()" class="space-y-4">
 
-            <div class="bg-slate-900 border border-slate-800/80 rounded-2xl anim-fadeinup anim-delay-2 shadow-xl">
-                <div class="overflow-x-auto rounded-2xl">
-                    <table class="w-full min-w-[900px] border-collapse">
-                        <thead>
+            <div
+                class="md:bg-slate-900 md:border md:border-slate-800/80 md:rounded-2xl anim-fadeinup anim-delay-2 md:shadow-xl">
+                <div class="w-full">
+                    <table class="w-full border-collapse block md:table">
+                        <thead class="hidden md:table-header-group">
                             <tr class="border-b border-slate-800/80 bg-slate-950/30">
                                 <th
                                     class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-6 py-4.5">
                                     Libro</th>
                                 <th
-                                    class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-6 py-4.5 hidden md:table-cell">
+                                    class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-6 py-4.5">
                                     Usuario</th>
                                 <th
                                     class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-6 py-4.5">
@@ -77,13 +78,16 @@
                                     Estado</th>
                                 <th
                                     class="text-right text-xs font-semibold text-slate-400 uppercase tracking-wider px-6 py-4.5">
-                                    Acción</th>
+                                    Acciones</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-800/50">
 
-                            <tr th:if="${#lists.isEmpty(prestamos)}">
-                                <td colspan="6" class="text-center py-20 text-slate-500">
+                        <tbody
+                            class="md:divide-y md:divide-slate-800/50 block md:table-row-group space-y-4 md:space-y-0">
+
+                            <tr th:if="${#lists.isEmpty(prestamos)}" class="block md:table-row">
+                                <td colspan="6"
+                                    class="text-center py-20 text-slate-500 block md:table-cell bg-slate-900 rounded-2xl border border-slate-800/80 md:border-none">
                                     <i data-lucide="clipboard-list"
                                         class="w-12 h-12 mx-auto mb-3 opacity-20 text-slate-400"></i>
                                     <p class="text-base font-medium text-slate-400">No se encontraron préstamos</p>
@@ -91,158 +95,206 @@
                                 </td>
                             </tr>
 
-                            <tr th:each="prestamo : ${prestamos}" class="hover:bg-slate-800/20 transition-colors group"
-                                th:classappend="${prestamo.estado.name() == 'VENCIDO'} ? 'border-l-2 border-l-red-500' :
-                                               (${prestamo.estado.name() == 'PENDIENTE'} ? 'border-l-2 border-l-amber-500' : '')">
+                            <tr th:each="prestamo : ${prestamos}"
+                                class="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 md:p-0 flex flex-col md:table-row md:bg-transparent md:border-none md:hover:bg-slate-800/20 transition-colors group relative overflow-hidden"
+                                th:classappend="${prestamo.estado.name() == 'VENCIDO'} ? 'border-l-4 border-l-red-500 md:border-l-2' :
+                                               (${prestamo.estado.name() == 'PENDIENTE'} ? 'border-l-4 border-l-amber-500 md:border-l-2' :
+                                               (${prestamo.estado.name() == 'ACTIVO'} ? 'border-l-4 border-l-emerald-500 md:border-l-2' : ''))">
 
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3.5">
+                                <td class="px-0 md:px-6 py-2 md:py-4 block md:table-cell">
+                                    <div class="flex items-start gap-3.5">
                                         <img th:src="${prestamo.libro.coverUrlResolved}" alt="Cover"
-                                            class="w-9 h-12 object-cover rounded shadow-md bg-slate-950 shrink-0 border border-slate-800"
+                                            class="w-11 h-16 md:w-9 md:h-12 object-cover rounded-lg shadow-md bg-slate-950 shrink-0 border border-slate-800"
                                             onerror="this.src='/img/no-cover.png'" />
-                                        <div class="min-w-0">
-                                            <p class="text-sm font-semibold text-white truncate max-w-xs group-hover:text-primary-400 transition-colors"
-                                                th:text="${prestamo.libro.titulo}">Título</p>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center justify-between gap-2 md:block">
+                                                <p class="text-sm font-bold text-white truncate max-w-[180px] sm:max-w-xs group-hover:text-primary-400 transition-colors"
+                                                    th:text="${prestamo.libro.titulo}">Título</p>
+
+                                                <span
+                                                    class="md:hidden text-[11px] px-2.5 py-0.5 rounded-full font-semibold tracking-wide border"
+                                                    th:classappend="${prestamo.estado.name() == 'ACTIVO'} ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                                   (${prestamo.estado.name() == 'VENCIDO'} ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                                                   (${prestamo.estado.name() == 'DEVUELTO'} ? 'bg-slate-800/60 text-slate-400 border-slate-700/60' :
+                                                                   (${prestamo.estado.name() == 'PENDIENTE'} ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-800 text-slate-500')))"
+                                                    th:text="${prestamo.estado}">Estado</span>
+                                            </div>
                                             <p class="text-xs text-slate-400 mt-0.5 truncate max-w-xs"
                                                 th:text="${prestamo.libro.autor}">Autor</p>
                                         </div>
                                     </div>
                                 </td>
 
+                                <td
+                                    class="px-0 md:px-6 py-2 md:py-4 block md:table-cell border-t border-slate-800/40 md:border-none mt-3 md:mt-0 pt-3 md:pt-4">
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-[10px] uppercase font-bold text-slate-500 tracking-wider md:hidden mb-1">Lector
+                                            / Usuario</span>
+                                        <p class="text-sm font-semibold text-slate-200"
+                                            th:text="${prestamo.usuario.nombreCompleto}">Usuario</p>
+                                        <p class="text-xs text-slate-500 mt-0.5 font-mono"
+                                            th:text="${prestamo.usuario.email}">email</p>
+                                        <p th:if="${prestamo.notas != null and #strings.contains(prestamo.notas, 'Email:')}"
+                                            class="text-xs text-amber-400/90 mt-1.5 font-medium bg-amber-500/5 border border-amber-500/10 rounded-lg px-2 py-0.5 inline-block self-start"
+                                            th:text="${prestamo.notas}">notas</p>
+                                    </div>
+                                </td>
+
+                                <td class="px-0 md:px-6 py-2 md:py-4 block md:table-cell">
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-[10px] uppercase font-bold text-slate-500 tracking-wider md:hidden mb-0.5">Fecha
+                                            de Préstamo</span>
+                                        <span class="text-sm text-slate-300 font-medium"
+                                            th:text="${#temporals.format(prestamo.fechaPrestamo, 'dd/MM/yyyy')}">—</span>
+                                    </div>
+                                </td>
+
+                                <td class="px-0 md:px-6 py-2 md:py-4 block md:table-cell">
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-[10px] uppercase font-bold text-slate-500 tracking-wider md:hidden mb-0.5">Fecha
+                                            de Devolución</span>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <span class="text-sm font-bold"
+                                                th:classappend="${prestamo.estado.name() == 'VENCIDO'} ? 'text-red-400' : 'text-slate-300'"
+                                                th:text="${#temporals.format(prestamo.fechaDevolucion, 'dd/MM/yyyy')}">—</span>
+                                            <span th:if="${prestamo.horaDevolucion != null}"
+                                                class="text-xs text-slate-500 font-mono bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800/60"
+                                                th:text="'hrs ' + ${prestamo.horaDevolucion}">hora</span>
+                                        </div>
+                                        <p th:if="${prestamo.estado.name() == 'VENCIDO'}"
+                                            class="text-xs text-red-500 font-semibold mt-1 flex items-center gap-1"
+                                            th:text="${prestamo.diasMora} + ' días de mora'">mora</p>
+                                    </div>
+                                </td>
+
                                 <td class="px-6 py-4 hidden md:table-cell">
-                                    <p class="text-sm font-medium text-slate-200"
-                                        th:text="${prestamo.usuario.nombreCompleto}">Usuario</p>
-                                    <p class="text-xs text-slate-500 mt-0.5" th:text="${prestamo.usuario.email}">email
-                                    </p>
-                                    <p th:if="${prestamo.notas != null and #strings.contains(prestamo.notas, 'Email:')}"
-                                        class="text-xs text-amber-400/80 mt-1 font-medium bg-amber-500/5 border border-amber-500/10 rounded px-2 py-0.5 inline-block"
-                                        th:text="${prestamo.notas}">notas</p>
-                                </td>
-
-                                <td class="px-6 py-4">
-                                    <span class="text-sm text-slate-300"
-                                        th:text="${#temporals.format(prestamo.fechaPrestamo, 'dd/MM/yyyy')}">—</span>
-                                </td>
-
-                                <td class="px-6 py-4">
-                                    <span class="text-sm font-semibold"
-                                        th:classappend="${prestamo.estado.name() == 'VENCIDO'} ? 'text-red-400' : 'text-slate-300'"
-                                        th:text="${#temporals.format(prestamo.fechaDevolucion, 'dd/MM/yyyy')}">—</span>
-                                    <p th:if="${prestamo.horaDevolucion != null}"
-                                        class="text-xs text-slate-500 mt-0.5 font-mono"
-                                        th:text="'hrs ' + ${prestamo.horaDevolucion}">hora</p>
-                                    <p th:if="${prestamo.estado.name() == 'VENCIDO'}"
-                                        class="text-xs text-red-500 font-semibold mt-1 flex items-center gap-1"
-                                        th:text="${prestamo.diasMora} + ' días de mora'">mora</p>
-                                </td>
-
-                                <td class="px-6 py-4">
                                     <span class="text-xs px-2.5 py-1 rounded-full font-semibold tracking-wide border"
                                         th:classappend="${prestamo.estado.name() == 'ACTIVO'} ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                         (${prestamo.estado.name() == 'VENCIDO'} ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                         (${prestamo.estado.name() == 'DEVUELTO'} ? 'bg-slate-800/60 text-slate-400 border-slate-700/60' :
-                                                         (${prestamo.estado.name() == 'PENDIENTE'} ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-800 text-slate-500')))"
+                                                       (${prestamo.estado.name() == 'VENCIDO'} ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                                       (${prestamo.estado.name() == 'DEVUELTO'} ? 'bg-slate-800/60 text-slate-400 border-slate-700/60' :
+                                                       (${prestamo.estado.name() == 'PENDIENTE'} ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-slate-800 text-slate-500')))"
                                         th:text="${prestamo.estado}">Estado</span>
                                 </td>
 
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex justify-end" x-data="{ openMenu: false }">
-                                        <div class="relative inline-block text-left">
+                                <td
+                                    class="px-0 md:px-6 py-3 md:py-4 block md:table-cell border-t border-slate-800/40 md:border-none mt-3 md:mt-0 pt-4 md:pt-4">
+                                    <div
+                                        class="flex flex-col sm:flex-row md:flex-row items-stretch md:justify-end gap-2">
 
-                                            <button @click="openMenu = !openMenu" @click.away="openMenu = false"
-                                                class="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800/80 transition-all focus:outline-none border border-transparent hover:border-slate-700/40">
-                                                <i data-lucide="ellipsis-vertical" class="w-4 h-4"></i>
-                                            </button>
+                                        <div th:if="${prestamo.estado.name() == 'PENDIENTE'}"
+                                            class="flex items-center gap-2 w-full md:w-auto">
+                                            <form th:action="@{/admin/prestamos/{id}/aceptar(id=${prestamo.id})}"
+                                                method="post" class="flex-1 sm:flex-initial">
+                                                <input type="hidden" th:name="${_csrf.parameterName}"
+                                                    th:value="${_csrf.token}" />
+                                                <button type="submit" title="Aceptar Solicitud"
+                                                    class="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/20 rounded-xl text-xs font-bold transition-all">
+                                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                                    <span class="md:hidden">Aceptar</span>
+                                                </button>
+                                            </form>
+                                            <form th:id="'form-rechazar-' + ${prestamo.id}"
+                                                th:action="@{/admin/prestamos/{id}/rechazar(id=${prestamo.id})}"
+                                                method="post" class="flex-1 sm:flex-initial">
+                                                <input type="hidden" th:name="${_csrf.parameterName}"
+                                                    th:value="${_csrf.token}" />
+                                                <button type="button"
+                                                    th:onclick="'confirmarAccion(\'#form-rechazar-\' + ' + ${prestamo.id} + ', \'¿Rechazar solicitud?\', \'Esta solicitud de préstamo cambiará a estado RECHAZADO.\', \'warning\', \'Sí, rechazar\')'"
+                                                    title="Rechazar Solicitud"
+                                                    class="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-slate-950 border border-red-500/20 rounded-xl text-xs font-bold transition-all">
+                                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                                    <span class="md:hidden">Rechazar</span>
+                                                </button>
+                                            </form>
+                                            <form th:id="'form-eliminar-' + ${prestamo.id}"
+                                                th:action="@{/admin/prestamos/{id}/eliminar(id=${prestamo.id})}"
+                                                method="post" class="sm:ml-auto md:ml-0">
+                                                <input type="hidden" th:name="${_csrf.parameterName}"
+                                                    th:value="${_csrf.token}" />
+                                                <button type="button"
+                                                    th:onclick="'confirmarAccion(\'#form-eliminar-\' + ' + ${prestamo.id} + ', \'¿Eliminar registro?\', \'Esta acción es definitiva.\', \'error\', \'Sí, eliminar\')'"
+                                                    title="Eliminar definitivamente"
+                                                    class="p-2 bg-slate-950 hover:bg-red-950 text-slate-400 hover:text-red-400 border border-slate-800 rounded-xl transition-all flex items-center justify-center">
+                                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                </button>
+                                            </form>
+                                        </div>
 
-                                            <div x-show="openMenu" x-transition:enter="transition ease-out duration-100"
-                                                x-transition:enter-start="transform opacity-0 scale-95"
-                                                x-transition:enter-end="transform opacity-100 scale-100"
-                                                x-transition:leave="transition ease-in duration-75"
-                                                x-transition:leave-start="transform opacity-100 scale-100"
-                                                x-transition:leave-end="transform opacity-0 scale-95"
-                                                class="absolute right-0 bottom-full sm:bottom-auto sm:top-full mt-1 mb-1 w-52 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl z-50 overflow-hidden divide-y divide-slate-800/60"
-                                                style="display: none;">
+                                        <div th:if="${prestamo.estado.name() == 'ACTIVO' or prestamo.estado.name() == 'VENCIDO'}"
+                                            class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
 
-                                                <div th:if="${prestamo.estado.name() == 'PENDIENTE'}" class="py-1">
-                                                    <form
-                                                        th:action="@{/admin/prestamos/{id}/aceptar(id=${prestamo.id})}"
-                                                        method="post">
-                                                        <input type="hidden" th:name="${_csrf.parameterName}"
-                                                            th:value="${_csrf.token}" />
-                                                        <button type="submit"
-                                                            class="w-full text-left px-4 py-2.5 text-xs font-medium text-emerald-400 hover:bg-slate-900/80 flex items-center gap-2 transition-colors">
-                                                            <i data-lucide="check" class="w-4 h-4"></i> Aceptar
-                                                            Solicitud
-                                                        </button>
-                                                    </form>
-                                                    <form th:id="'form-rechazar-' + ${prestamo.id}"
-                                                        th:action="@{/admin/prestamos/{id}/rechazar(id=${prestamo.id})}"
-                                                        method="post">
-                                                        <input type="hidden" th:name="${_csrf.parameterName}"
-                                                            th:value="${_csrf.token}" />
-                                                        <button type="button"
-                                                            th:onclick="'confirmarAccion(\'#form-rechazar-\' + ' + ${prestamo.id} + ', \'¿Rechazar solicitud?\', \'Esta solicitud de préstamo cambiará a estado RECHAZADO.\', \'warning\', \'Sí, rechazar\')'"
-                                                            class="w-full text-left px-4 py-2.5 text-xs font-medium text-red-400 hover:bg-slate-900/80 flex items-center gap-2 transition-colors">
-                                                            <i data-lucide="x" class="w-4 h-4"></i> Rechazar Solicitud
-                                                        </button>
-                                                    </form>
-                                                </div>
+                                            <form th:id="'form-devolver-' + ${prestamo.id}"
+                                                th:action="@{/admin/prestamos/{id}/devolver(id=${prestamo.id})}"
+                                                method="post" class="w-full md:w-auto">
+                                                <input type="hidden" th:name="${_csrf.parameterName}"
+                                                    th:value="${_csrf.token}" />
+                                                <button type="button"
+                                                    th:onclick="'confirmarAccion(\'#form-devolver-\' + ' + ${prestamo.id} + ', \'¿Registrar devolución?\', \'Se registrará el ingreso del libro a la biblioteca.\', \'question\', \'Sí, devolver\')'"
+                                                    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 md:bg-emerald-500/10 md:hover:bg-emerald-500 text-slate-950 md:text-emerald-400 md:hover:text-slate-950 border border-emerald-500/20 rounded-xl text-xs font-bold transition-all shadow-md md:shadow-none">
+                                                    <i data-lucide="corner-down-left" class="w-4 h-4 shrink-0"></i>
+                                                    <span>Registrar Devolución</span>
+                                                </button>
+                                            </form>
 
-                                                <div th:if="${prestamo.estado.name() == 'ACTIVO' or prestamo.estado.name() == 'VENCIDO'}"
-                                                    class="py-1">
-                                                    <form th:id="'form-devolver-' + ${prestamo.id}"
-                                                        th:action="@{/admin/prestamos/{id}/devolver(id=${prestamo.id})}"
-                                                        method="post">
-                                                        <input type="hidden" th:name="${_csrf.parameterName}"
-                                                            th:value="${_csrf.token}" />
-                                                        <button type="button"
-                                                            th:onclick="'confirmarAccion(\'#form-devolver-\' + ' + ${prestamo.id} + ', \'¿Registrar devolución?\', \'Se registrará el ingreso del libro a la biblioteca.\', \'question\', \'Sí, devolver\')'"
-                                                            class="w-full text-left px-4 py-2.5 text-xs font-medium text-emerald-400 hover:bg-slate-900/80 flex items-center gap-2 transition-colors">
-                                                            <i data-lucide="corner-down-left" class="w-4 h-4"></i>
-                                                            Registrar Devolución
-                                                        </button>
-                                                    </form>
+                                            <div
+                                                class="flex items-center justify-between sm:justify-end gap-1.5 mt-1 sm:mt-0">
+                                                <button type="button" th:data-id="${prestamo.id}"
+                                                    th:data-fecha="${prestamo.fechaDevolucion}"
+                                                    th:data-hora="${prestamo.horaDevolucion}"
+                                                    th:data-estado="${prestamo.estado.name()}"
+                                                    th:data-notas="${prestamo.notas}" @click="abrirModal($el)"
+                                                    title="Editar Fechas / Estado"
+                                                    class="flex-1 sm:flex-initial p-2 bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-xl transition-all flex items-center justify-center gap-2 md:gap-0">
+                                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                                    <span class="sm:hidden text-xs font-medium">Editar</span>
+                                                </button>
 
-                                                    <button type="button" th:data-id="${prestamo.id}"
-                                                        th:data-fecha="${prestamo.fechaDevolucion}"
-                                                        th:data-hora="${prestamo.horaDevolucion}"
-                                                        th:data-estado="${prestamo.estado.name()}"
-                                                        th:data-notas="${prestamo.notas}" @click="abrirModal($el)"
-                                                        class="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-300 hover:bg-slate-900/80 flex items-center gap-2 transition-colors">
-                                                        <i data-lucide="pencil" class="w-4 h-4"></i> Editar Fechas /
-                                                        Estado
+                                                <form th:action="@{/admin/prestamos/{id}/notificar(id=${prestamo.id})}"
+                                                    method="post" class="flex-1 sm:flex-initial">
+                                                    <input type="hidden" th:name="${_csrf.parameterName}"
+                                                        th:value="${_csrf.token}" />
+                                                    <button type="submit" title="Enviar Notificación de Control"
+                                                        class="w-full p-2 bg-slate-950 hover:bg-blue-950/40 text-blue-400 border border-slate-800/80 rounded-xl transition-all flex items-center justify-center gap-2 md:gap-0">
+                                                        <i data-lucide="bell" class="w-4 h-4"></i>
+                                                        <span class="sm:hidden text-xs font-medium">Notificar</span>
                                                     </button>
+                                                </form>
 
-                                                    <form
-                                                        th:action="@{/admin/prestamos/{id}/notificar(id=${prestamo.id})}"
-                                                        method="post">
-                                                        <input type="hidden" th:name="${_csrf.parameterName}"
-                                                            th:value="${_csrf.token}" />
-                                                        <button type="submit"
-                                                            class="w-full text-left px-4 py-2.5 text-xs font-medium text-blue-400 hover:bg-slate-900/80 flex items-center gap-2 transition-colors">
-                                                            <i data-lucide="bell" class="w-4 h-4"></i> Enviar
-                                                            Notificación
-                                                        </button>
-                                                    </form>
-                                                </div>
-
-                                                <div class="py-1 bg-red-950/10">
-                                                    <form th:id="'form-eliminar-' + ${prestamo.id}"
-                                                        th:action="@{/admin/prestamos/{id}/eliminar(id=${prestamo.id})}"
-                                                        method="post">
-                                                        <input type="hidden" th:name="${_csrf.parameterName}"
-                                                            th:value="${_csrf.token}" />
-                                                        <button type="button"
-                                                            th:onclick="'confirmarAccion(\'#form-eliminar-\' + ' + ${prestamo.id} + ', \'¿Estás completamente seguro?\', \'Este préstamo se eliminará permanentemente del sistema. No podrás revertir esto.\', \'error\', \'Sí, eliminar definitivamente\')'"
-                                                            class="w-full text-left px-4 py-2.5 text-xs text-red-500 hover:bg-red-950/30 font-semibold flex items-center gap-2 transition-colors">
-                                                            <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar
-                                                            Registro
-                                                        </button>
-                                                    </form>
-                                                </div>
-
+                                                <form th:id="'form-eliminar-' + ${prestamo.id}"
+                                                    th:action="@{/admin/prestamos/{id}/eliminar(id=${prestamo.id})}"
+                                                    method="post" class="flex-1 sm:flex-initial">
+                                                    <input type="hidden" th:name="${_csrf.parameterName}"
+                                                        th:value="${_csrf.token}" />
+                                                    <button type="button"
+                                                        th:onclick="'confirmarAccion(\'#form-eliminar-\' + ' + ${prestamo.id} + ', \'¿Estás completamente seguro?\', \'Este préstamo se eliminará permanentemente del sistema.\', \'error\', \'Sí, eliminar definitivamente\')'"
+                                                        title="Eliminar definitivo"
+                                                        class="w-full p-2 bg-slate-950 hover:bg-red-950/40 text-red-400 border border-slate-800/80 rounded-xl transition-all flex items-center justify-center gap-2 md:gap-0">
+                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                        <span class="sm:hidden text-xs font-medium">Eliminar</span>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </div>
+
+                                        <div th:if="${prestamo.estado.name() == 'DEVUELTO' or prestamo.estado.name() == 'RECHAZADO'}"
+                                            class="w-full md:w-auto text-right">
+                                            <form th:id="'form-eliminar-' + ${prestamo.id}"
+                                                th:action="@{/admin/prestamos/{id}/eliminar(id=${prestamo.id})}"
+                                                method="post" class="w-full md:w-auto">
+                                                <input type="hidden" th:name="${_csrf.parameterName}"
+                                                    th:value="${_csrf.token}" />
+                                                <button type="button"
+                                                    th:onclick="'confirmarAccion(\'#form-eliminar-\' + ' + ${prestamo.id} + ', \'¿Eliminar registro?\', \'Esta acción limpiará el histórico de forma permanente.\', \'error\', \'Sí, borrar\')'"
+                                                    class="w-full md:w-auto flex items-center justify-center gap-2 px-3 py-2 bg-slate-950 hover:bg-red-950 text-slate-400 hover:text-red-400 border border-slate-800/80 rounded-xl text-xs font-medium transition-all">
+                                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                    <span class="md:hidden">Eliminar Historial</span>
+                                                </button>
+                                            </form>
+                                        </div>
+
                                     </div>
                                 </td>
                             </tr>
@@ -251,7 +303,7 @@
                 </div>
 
                 <div th:unless="${#lists.isEmpty(prestamos)}"
-                    class="px-6 py-4 border-t border-slate-800/60 text-xs text-slate-500 flex items-center justify-between bg-slate-950/10 rounded-b-2xl">
+                    class="px-6 py-4 border-t border-slate-800/60 text-xs text-slate-500 flex items-center justify-between bg-slate-950/10 rounded-b-2xl mt-4 md:mt-0">
                     <span>Mostrando <span class="text-slate-400 font-semibold"
                             th:text="${#lists.size(prestamos)}">0</span> préstamo(s) en total</span>
                 </div>
@@ -335,7 +387,7 @@
                     text: texto,
                     icon: icono,
                     showCancelButton: true,
-                    confirmButtonColor: icono === 'error' ? '#ef4444' : '#10b981',
+                    confirmButtonColor: icono === 'error' ? '#ef4444' : (icono === 'warning' ? '#f59e0b' : '#10b981'),
                     cancelButtonColor: '#334155',
                     confirmButtonText: botonConfirmar,
                     cancelButtonText: 'Cancelar',

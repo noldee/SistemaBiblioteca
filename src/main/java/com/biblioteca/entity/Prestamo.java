@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit; // Importante para el cálculo de días precisos
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,26 +76,42 @@ public class Prestamo {
     @Builder.Default
     private List<Notificacion> notificaciones = new ArrayList<>();
 
-    // ── Métodos de negocio ─────────────────────────────────
+    // ── Métodos de negocio corregidos ───────────────────────
+
+    /**
+     * Une la fecha de devolución con su hora exacta para la evaluación del sistema.
+     * Si no hay hora definida, se asume el último minuto del día (23:59:59).
+     */
+    public LocalDateTime getFechaHoraVencimiento() {
+        LocalTime hora = (this.horaDevolucion != null) ? this.horaDevolucion : LocalTime.MAX;
+        return LocalDateTime.of(this.fechaDevolucion, hora);
+    }
+
     public boolean isVencido() {
         return estado == EstadoPrestamo.ACTIVO
-                && LocalDate.now().isAfter(fechaDevolucion);
+                && LocalDateTime.now().isAfter(getFechaHoraVencimiento());
     }
 
     public boolean isProximoAVencer(int diasAntelacion) {
-        LocalDate limite = LocalDate.now().plusDays(diasAntelacion);
+        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime limite = ahora.plusDays(diasAntelacion);
+        LocalDateTime vencimiento = getFechaHoraVencimiento();
+
         return estado == EstadoPrestamo.ACTIVO
-                && !fechaDevolucion.isBefore(LocalDate.now())
-                && !fechaDevolucion.isAfter(limite);
+                && !vencimiento.isBefore(ahora)
+                && !vencimiento.isAfter(limite);
     }
 
     public long getDiasRestantes() {
-        return LocalDate.now().until(fechaDevolucion).getDays();
+        long dias = ChronoUnit.DAYS.between(LocalDate.now(), fechaDevolucion);
+        return Math.max(0, dias); // Evita números negativos si el vencimiento es hoy por la tarde
     }
 
     public long getDiasMora() {
-        if (!isVencido())
+        if (!isVencido()) {
             return 0;
-        return fechaDevolucion.until(LocalDate.now()).getDays();
+        }
+        long dias = ChronoUnit.DAYS.between(fechaDevolucion, LocalDate.now());
+        return Math.max(0, dias); // Si vence hoy mismo por horas, devolverá 0 días de mora (mora por horas)
     }
 }
