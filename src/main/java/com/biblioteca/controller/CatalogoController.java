@@ -72,6 +72,9 @@ public class CatalogoController {
                         @AuthenticationPrincipal UserDetails userDetails,
                         Model model) {
 
+                // ✅ ACTUALIZAR VENCIDOS PRIMERO
+                prestamoService.actualizarPrestamosVencidos();
+
                 var usuario = usuarioService.findByEmail(
                                 userDetails.getUsername());
 

@@ -311,4 +311,27 @@ public class PrestamoService {
         log.info("Préstamo editado: id={}", id);
         return prestamo;
     }
+
+    public void actualizarPrestamosVencidos() {
+
+        List<Prestamo> activos = prestamoRepository.findByEstado(EstadoPrestamo.ACTIVO);
+
+        for (Prestamo prestamo : activos) {
+
+            if (prestamo.isVencido()) {
+
+                prestamo.setEstado(EstadoPrestamo.VENCIDO);
+
+                prestamoRepository.save(prestamo);
+
+                crearNotificacion(
+                        prestamo.getUsuario(),
+                        prestamo,
+                        "PRESTAMO_VENCIDO",
+                        "⚠️ Tu préstamo de '" +
+                                prestamo.getLibro().getTitulo() +
+                                "' ha vencido.");
+            }
+        }
+    }
 }

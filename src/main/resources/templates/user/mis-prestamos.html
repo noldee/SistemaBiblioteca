@@ -183,7 +183,7 @@
                                         <p class="text-sm font-semibold text-emerald-400"
                                             th:text="${prestamo.diasRestantes} + ' día(s)'">0 días</p>
                                     </div>
-                                    <div th:if="${prestamo.vencido}">
+                                    <div th:if="${prestamo.vencido or prestamo.estado.name() == 'VENCIDO'}">
                                         <p class="text-xs text-slate-500">Días de mora</p>
                                         <p class="text-sm font-semibold text-red-400"
                                             th:text="${prestamo.diasMora} + ' día(s)'">0</p>

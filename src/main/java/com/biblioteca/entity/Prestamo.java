@@ -88,8 +88,19 @@ public class Prestamo {
     }
 
     public boolean isVencido() {
-        return estado == EstadoPrestamo.ACTIVO
-                && LocalDateTime.now().isAfter(getFechaHoraVencimiento());
+
+        // Si ya está marcado como vencido en BD
+        if (estado == EstadoPrestamo.VENCIDO) {
+            return true;
+        }
+
+        // Si ya fue devuelto
+        if (estado == EstadoPrestamo.DEVUELTO) {
+            return false;
+        }
+
+        // Verificación por fecha/hora exacta
+        return LocalDateTime.now().isAfter(getFechaHoraVencimiento());
     }
 
     public boolean isProximoAVencer(int diasAntelacion) {
